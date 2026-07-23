@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { WsEvent, OrderSource, type WsMessage } from "@le-tandoor/shared";
+import { WsEvent, OrderSource, OrderStatus, type WsMessage } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
 import { usePendingWebOrders } from "../store/pendingWebOrders";
 import type { Order } from "../types";
@@ -37,9 +37,17 @@ export function useRealtimeSync() {
             break;
           }
           case WsEvent.ORDER_UPDATED:
-          case WsEvent.ORDER_CLOSED:
+          case WsEvent.ORDER_CLOSED: {
             queryClient.invalidateQueries({ queryKey: ["orders"] });
+            // Une commande avancée/annulée/clôturée sur N'IMPORTE QUEL appareil doit couper la
+            // sonnerie PARTOUT — sans ça, chaque appareil ne gérait que son propre état local et
+            // continuait de sonner indéfiniment même après traitement de la commande ailleurs.
+            const updatedOrder = message.payload as Order | undefined;
+            if (updatedOrder && updatedOrder.status !== OrderStatus.NOUVELLE) {
+              usePendingWebOrders.getState().acknowledge(updatedOrder.id);
+            }
             break;
+          }
           case WsEvent.TABLE_UPDATED:
             queryClient.invalidateQueries({ queryKey: ["tables"] });
             break;
