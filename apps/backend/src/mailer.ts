@@ -21,7 +21,7 @@ function getTransporter(): Transporter | null {
   return transporter;
 }
 
-export async function sendCustomerEmail(to: string, subject: string, text: string): Promise<void> {
+export async function sendCustomerEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
   const t = getTransporter();
   if (!t) {
     console.warn("[mailer] IMAP_USER/IMAP_PASSWORD non configurés — email client non envoyé");
@@ -32,5 +32,6 @@ export async function sendCustomerEmail(to: string, subject: string, text: strin
     to,
     subject,
     text,
+    html,
   });
 }
