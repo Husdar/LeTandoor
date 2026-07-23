@@ -1,5 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
+# Prisma a besoin d'OpenSSL pour générer et exécuter ses moteurs — absent des images Alpine par défaut.
+RUN apk add --no-cache openssl
 
 COPY package.json tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/package.json
@@ -15,6 +17,7 @@ RUN npm run build --workspace=apps/backend
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
