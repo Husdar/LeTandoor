@@ -11,3 +11,6 @@ build/
 apps/backend/prisma/dev.db
 coverage/
 .vite/
+*.tsbuildinfo
+apps/frontend/vite.config.js
+apps/frontend/vite.config.d.ts

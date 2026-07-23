@@ -31,4 +31,8 @@ export const env = {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
   orderEmailSubjectPattern: process.env.ORDER_EMAIL_SUBJECT_PATTERN ?? "commande",
+  // Jeton partagé avec le petit relais d'impression local (voir apps/print-relay) — le backend
+  // étant hébergé à distance, il ne peut pas atteindre directement les imprimantes du réseau
+  // local du restaurant ; le relais tourne sur place et transmet les tickets en TCP.
+  printRelayToken: process.env.PRINT_RELAY_TOKEN,
 };

@@ -39,6 +39,7 @@ services:
       IMAP_PASSWORD: ${IMAP_PASSWORD:-}
       ORDER_EMAIL_SENDER: ${ORDER_EMAIL_SENDER:-noreply@account.hostinger.com,noreply@store.hostinger.com}
       ORDER_EMAIL_SUBJECT_PATTERN: ${ORDER_EMAIL_SUBJECT_PATTERN:-commande}
+      PRINT_RELAY_TOKEN: ${PRINT_RELAY_TOKEN:-}
     # Pas de port publié : le frontend (nginx) est le seul point d'entrée, il proxifie /api et /ws
     # vers ce service via le réseau interne Docker Compose (nom de service = hôte "backend").
 

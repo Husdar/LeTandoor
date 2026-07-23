@@ -41,7 +41,7 @@ function scheduleDingDong(ctx: AudioContext, start: number) {
     osc.frequency.value = freq;
     const noteStart = start + i * 0.18;
     gain.gain.setValueAtTime(0, noteStart);
-    gain.gain.linearRampToValueAtTime(0.35, noteStart + 0.03);
+    gain.gain.linearRampToValueAtTime(0.9, noteStart + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.35);
     osc.connect(gain);
     gain.connect(ctx.destination);

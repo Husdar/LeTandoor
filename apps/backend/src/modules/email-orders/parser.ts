@@ -28,14 +28,48 @@ export interface ParsedEmailOrder {
 
 export class EmailParseError extends Error {}
 
-/** Combine un créneau brut ("19h" ou "19h30") avec la date de réception pour obtenir un instant complet. */
+const RESTAURANT_TIMEZONE = "Europe/Paris";
+
+/**
+ * Décalage (en minutes) entre UTC et `timeZone` à l'instant `date`, calculé sans dépendance
+ * externe. Nécessaire car le serveur de production tourne en UTC (Render), alors que le
+ * développement local tourne en heure de Paris — `Date.setHours()` utilise le fuseau du
+ * serveur, ce qui décale silencieusement l'horaire de 1h ou 2h une fois déployé.
+ */
+function timezoneOffsetMinutes(timeZone: string, date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
+  const asUTC = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return (asUTC - date.getTime()) / 60_000;
+}
+
+/** Combine un créneau brut ("19h" ou "19h30") avec la date de réception pour obtenir un instant complet, en heure de Paris. */
 export function resolveRequestedTime(label: string, referenceDate: Date): Date {
   const match = label.match(/^(\d{1,2})h(\d{0,2})$/);
   const hours = match ? Number(match[1]) : 0;
   const minutes = match && match[2] ? Number(match[2]) : 0;
-  const result = new Date(referenceDate);
-  result.setHours(hours, minutes, 0, 0);
-  return result;
+
+  const dayParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: RESTAURANT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(referenceDate);
+  const get = (type: string) => Number(dayParts.find((p) => p.type === type)!.value);
+
+  const offsetMinutes = timezoneOffsetMinutes(RESTAURANT_TIMEZONE, referenceDate);
+  const utcMillis =
+    Date.UTC(get("year"), get("month") - 1, get("day"), hours, minutes, 0, 0) - offsetMinutes * 60_000;
+  return new Date(utcMillis);
 }
 
 function toNumber(raw: string): number {
@@ -86,11 +120,23 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
     const [, rawName, fulfillment, qty, unitPrice, lineTotalNextLine, lineTotalSameLine] = match;
     if (fulfillment) fulfillmentLabel = fulfillment.trim();
 
-    // Les articles en offre groupée sont annoncés par un préfixe promo suivi d'un tiret cadratin
-    // ("- 1 acheté = 1 offert — 2x Poulet Curry") : on ne garde que le nom réel du plat.
+    // Le tiret cadratin a deux usages opposés selon le gabarit, à distinguer :
+    //  - offre groupée : "- 1 acheté = 1 offert — 2x Poulet Curry" (le vrai nom SUIT le tiret)
+    //  - mode de retrait par article : "- Poisson Kashmiri — À emporter" (le vrai nom PRÉCÈDE le
+    //    tiret, suivi du mode de retrait — à traiter comme un "Commander: ..." si aucun n'est
+    //    déjà connu, car c'est un signal fiable pour le type de commande).
     let name = rawName.trim().replace(/^-\s*/, "");
     const dashIdx = name.lastIndexOf("—");
-    if (dashIdx >= 0) name = name.slice(dashIdx + 1).trim();
+    if (dashIdx >= 0) {
+      const before = name.slice(0, dashIdx).trim();
+      const after = name.slice(dashIdx + 1).trim();
+      if (/^(à emporter|a emporter|emporter|livraison|sur place)$/i.test(after)) {
+        name = before;
+        if (!fulfillmentLabel) fulfillmentLabel = after;
+      } else {
+        name = after;
+      }
+    }
     name = name.replace(/^\d+\s*x\s*/i, "");
 
     items.push({

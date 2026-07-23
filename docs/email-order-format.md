@@ -89,6 +89,31 @@ la ligne suivante. Le parser gère les deux formats (regex avec alternative
 (voir `EmailIngestLog` du 2026-07-23, commande #2145) — à surveiller si Hostinger
 introduit encore d'autres variantes de mise en forme des offres.
 
+## Variante : mode de retrait par article après le nom du plat
+
+Une variante du Gabarit C ajoute le mode de retrait **après** le nom de chaque plat plutôt que
+sur une ligne "Commander:" séparée :
+
+```
+- Poisson Kashmiri — À emporter
+  1 x €12.00 = €12.00
+```
+
+À ne pas confondre avec le format "offre groupée" du Gabarit C, où le tiret cadratin a le sens
+inverse (le vrai nom du plat suit le tiret, précédé d'un texte promo `1 acheté = 1 offert —`).
+Le parser distingue les deux en testant si le texte après le tiret correspond à un mode de
+retrait connu (`à emporter`, `livraison`, `sur place`) — si oui, c'est le nom AVANT le tiret qui
+est le vrai plat, et ce mode est aussi capturé comme `fulfillmentLabel` (repère fiable pour le
+type de commande). Sinon, on garde l'ancien comportement (nom APRÈS le tiret).
+
+## Fuseau horaire du créneau souhaité
+
+`resolveRequestedTime()` calcule l'horaire choisi par le client **en heure de Paris**, quel que
+soit le fuseau horaire du serveur qui exécute le code. C'est nécessaire car le serveur de
+production (Render) tourne en UTC, contrairement à un poste de développement local souvent réglé
+sur Europe/Paris — un simple `Date.setHours()` (qui utilise le fuseau du serveur) décalait donc
+l'horaire de 2h une fois déployé, sans que ça se voie en local.
+
 ## Points d'attention communs
 
 - **Détection du type de commande** : si une ligne `Comman(der|de): ...` est présente
