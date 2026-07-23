@@ -1,6 +1,7 @@
-import type { Prisma } from "@prisma/client";
+import { InsightKind, type Prisma } from "@prisma/client";
 import { prisma } from "../../db.js";
 import { env } from "../../env.js";
+import { startOfParisDay } from "../../timezone.js";
 import { getDashboardStats, type DashboardStats } from "../analytics/service.js";
 
 function buildPrompt(stats: DashboardStats): string {
@@ -41,13 +42,10 @@ PERTES ET REMISES (30 derniers jours)
 Analyse ces données et donne 4 à 6 conseils concrets et directement actionnables pour améliorer les ventes, réduire les pertes, et mieux organiser le personnel et les horaires. Compare aux périodes précédentes quand c'est pertinent (ex: hausse/baisse). Si une donnée manque ou est à zéro, dis-le simplement plutôt que d'inventer. Réponds uniquement en français, de façon directe et pratique, sans généralités vagues.`;
 }
 
-export async function generateInsight() {
+async function callOpenRouter(systemPrompt: string, userPrompt: string): Promise<string> {
   if (!env.openRouterApiKey) {
     throw new Error("OPENROUTER_API_KEY non configurée sur le serveur");
   }
-
-  const stats = await getDashboardStats();
-  const prompt = buildPrompt(stats);
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -58,12 +56,8 @@ export async function generateInsight() {
     body: JSON.stringify({
       model: env.openRouterModel,
       messages: [
-        {
-          role: "system",
-          content:
-            "Tu es un consultant en gestion de restaurant. Tu analyses des données réelles de vente et donnes des conseils concrets, courts et actionnables en français, toujours basés sur les chiffres fournis, jamais de généralités vagues.",
-        },
-        { role: "user", content: prompt },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.4,
       max_tokens: 1200,
@@ -82,20 +76,75 @@ export async function generateInsight() {
   if (!content) {
     throw new Error("Réponse vide de l'IA");
   }
+  return content;
+}
+
+export async function generateInsight() {
+  const stats = await getDashboardStats();
+  const content = await callOpenRouter(
+    "Tu es un consultant en gestion de restaurant. Tu analyses des données réelles de vente et donnes des conseils concrets, courts et actionnables en français, toujours basés sur les chiffres fournis, jamais de généralités vagues.",
+    buildPrompt(stats)
+  );
 
   const periodStart = new Date();
   periodStart.setDate(periodStart.getDate() - 30);
 
-  const insight = await prisma.aiInsight.create({
+  return prisma.aiInsight.create({
     data: {
+      kind: InsightKind.MANUEL,
       periodStart,
       periodEnd: new Date(),
       content,
       dataSnapshot: stats as unknown as Prisma.InputJsonValue,
     },
   });
+}
 
-  return insight;
+function buildDailyPrompt(stats: DashboardStats): string {
+  const topLines = stats.topItems.map((i) => `- ${i.name} : ${i.quantity} vendus`).join("\n") || "(aucune donnée)";
+
+  return `Voici le bilan du jour pour le restaurant "Le Tandoor" (spécialités indiennes et pakistanaises, Lorient), à la clôture de la soirée.
+
+CHIFFRE D'AFFAIRES
+- Aujourd'hui : ${stats.revenue.today}€ (hier : ${stats.revenue.yesterday}€)
+- Cette semaine : ${stats.revenue.thisWeek}€ (semaine dernière : ${stats.revenue.lastWeek}€)
+- Nombre de commandes ce mois : ${stats.orderCounts.thisMonth}
+- Panier moyen (ce mois) : ${stats.averageBasket}€
+
+PLATS LES PLUS VENDUS (30 derniers jours, pour contexte)
+${topLines}
+
+ANNULATIONS DU JOUR (30 derniers jours, pour contexte)
+- Commandes annulées : ${stats.cancellations.count}
+- Perte estimée : ${stats.cancellations.itemsLoss}€
+
+Rédige un bilan très court de la soirée : 2-3 phrases maximum sur la performance du jour (comparée à hier/la semaine dernière), puis 2 à 3 suggestions concrètes et courtes pour demain. Si une donnée manque ou est à zéro, dis-le simplement. Réponds uniquement en français, de façon directe, sans généralités vagues, format compact (pas de longues listes).`;
+}
+
+export async function generateDailyInsight() {
+  const stats = await getDashboardStats();
+  const content = await callOpenRouter(
+    "Tu es un consultant en gestion de restaurant qui rédige un bilan de clôture très court, chaque soir, à partir de données réelles de vente. Direct, concret, jamais de généralités vagues.",
+    buildDailyPrompt(stats)
+  );
+
+  const now = new Date();
+  return prisma.aiInsight.create({
+    data: {
+      kind: InsightKind.QUOTIDIEN,
+      periodStart: startOfParisDay(now),
+      periodEnd: now,
+      content,
+      dataSnapshot: stats as unknown as Prisma.InputJsonValue,
+    },
+  });
+}
+
+export async function hasDailyInsightToday(): Promise<boolean> {
+  const count = await prisma.aiInsight.count({
+    where: { kind: InsightKind.QUOTIDIEN, generatedAt: { gte: startOfParisDay(new Date()) } },
+  });
+  return count > 0;
 }
 
 export async function listInsights() {

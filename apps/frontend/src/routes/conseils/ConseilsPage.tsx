@@ -44,16 +44,23 @@ export default function ConseilsPage() {
       <div className="space-y-4">
         {insights?.map((insight) => (
           <div key={insight.id} className="card whitespace-pre-wrap text-sm leading-relaxed text-burgundy/90">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gold-dark">
-              {t("conseils.basedOn")}{" "}
-              {new Date(insight.generatedAt).toLocaleString("fr-FR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-gold-dark">
+                {t("conseils.basedOn")}{" "}
+                {new Date(insight.generatedAt).toLocaleString("fr-FR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+              {insight.kind === "QUOTIDIEN" && (
+                <span className="rounded-full bg-burgundy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-burgundy">
+                  {t("conseils.dailyBadge")}
+                </span>
+              )}
+            </div>
             {insight.content}
           </div>
         ))}

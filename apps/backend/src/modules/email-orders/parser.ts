@@ -1,4 +1,5 @@
 import { OrderType } from "@le-tandoor/shared";
+import { RESTAURANT_TIMEZONE, timezoneOffsetMinutes } from "../../timezone.js";
 
 export interface ParsedEmailOrderItem {
   name: string;
@@ -27,30 +28,6 @@ export interface ParsedEmailOrder {
 }
 
 export class EmailParseError extends Error {}
-
-const RESTAURANT_TIMEZONE = "Europe/Paris";
-
-/**
- * Décalage (en minutes) entre UTC et `timeZone` à l'instant `date`, calculé sans dépendance
- * externe. Nécessaire car le serveur de production tourne en UTC (Render), alors que le
- * développement local tourne en heure de Paris — `Date.setHours()` utilise le fuseau du
- * serveur, ce qui décale silencieusement l'horaire de 1h ou 2h une fois déployé.
- */
-function timezoneOffsetMinutes(timeZone: string, date: Date): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(date);
-  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
-  const asUTC = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
-  return (asUTC - date.getTime()) / 60_000;
-}
 
 /** Combine un créneau brut ("19h" ou "19h30") avec la date de réception pour obtenir un instant complet, en heure de Paris. */
 export function resolveRequestedTime(label: string, referenceDate: Date): Date {

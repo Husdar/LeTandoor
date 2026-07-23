@@ -1,56 +1,12 @@
 import { OrderStatus, OrderItemStatus, OrderType } from "@le-tandoor/shared";
 import { prisma } from "../../db.js";
-
-const RESTAURANT_TIMEZONE = "Europe/Paris";
+import { parisDateParts, parisDateOnly, startOfParisDay } from "../../timezone.js";
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/**
- * Décalage (en minutes) entre UTC et `timeZone` à l'instant `date`. Le serveur de production
- * tourne en UTC (Render) — sans ce calcul, les bornes "aujourd'hui / cette semaine / ce mois"
- * seraient décalées de 1 à 2h par rapport à la vraie journée du restaurant à Paris.
- */
-function timezoneOffsetMinutes(timeZone: string, date: Date): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(date);
-  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
-  const asUTC = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
-  return (asUTC - date.getTime()) / 60_000;
-}
-
-function parisDateParts(date: Date): { year: number; month: number; day: number } {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: RESTAURANT_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
-  return { year: get("year"), month: get("month"), day: get("day") };
-}
-
-/** Minuit (00:00) à Paris pour la journée calendaire de `d`, en instant UTC réel. */
-function startOfDay(d: Date): Date {
-  const { year, month, day } = parisDateParts(d);
-  const offsetMinutes = timezoneOffsetMinutes(RESTAURANT_TIMEZONE, d);
-  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - offsetMinutes * 60_000);
-}
-
-/** Date "calendaire" pure (minuit UTC, sans décalage) — pour comparer une colonne SQL DATE. */
-function parisDateOnly(d: Date): Date {
-  const { year, month, day } = parisDateParts(d);
-  return new Date(Date.UTC(year, month - 1, day));
-}
+const startOfDay = startOfParisDay;
 
 function addDays(d: Date, n: number): Date {
   const x = new Date(d);

@@ -17,6 +17,7 @@ import aiInsightsRoutes from "./modules/ai-insights/routes.js";
 import aiChatRoutes from "./modules/ai-chat/routes.js";
 import wsRoute from "./ws/route.js";
 import { startEmailOrderListener } from "./modules/email-orders/imap-listener.js";
+import { startDailyInsightScheduler } from "./modules/ai-insights/scheduler.js";
 
 async function main() {
   const fastify = Fastify({ logger: true });
@@ -47,6 +48,7 @@ async function main() {
   await fastify.listen({ port: env.port, host: "0.0.0.0" });
 
   startEmailOrderListener().catch((err) => fastify.log.error(err, "Échec du démarrage de l'écoute IMAP"));
+  startDailyInsightScheduler(fastify.log);
 }
 
 main().catch((err) => {

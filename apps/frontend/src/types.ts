@@ -152,8 +152,11 @@ export interface ManualRevenueEntry {
   createdAt: string;
 }
 
+export type InsightKind = "MANUEL" | "QUOTIDIEN";
+
 export interface AiInsight {
   id: string;
+  kind: InsightKind;
   generatedAt: string;
   periodStart: string;
   periodEnd: string;

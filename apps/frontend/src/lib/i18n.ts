@@ -144,6 +144,7 @@ const dict: Dict = {
     ur: "ابھی تک کوئی مشورہ نہیں بنایا گیا۔ ریسٹورنٹ کے اصل ڈیٹا کا تجزیہ کرنے کے لیے \"بنائیں\" پر کلک کریں۔",
   },
   "conseils.basedOn": { fr: "Basé sur les données du", ur: "ڈیٹا کی بنیاد پر" },
+  "conseils.dailyBadge": { fr: "Bilan automatique 23h", ur: "خودکار رات 11 بجے کا خلاصہ" },
 
   "assistant.title": { fr: "Assistant Le Tandoor", ur: "لے ٹنڈور اسسٹنٹ" },
   "assistant.open": { fr: "Ouvrir l'assistant", ur: "اسسٹنٹ کھولیں" },
