@@ -4,6 +4,7 @@ import { OrderSource } from "@le-tandoor/shared";
 import { useActiveOrders } from "../../hooks/queries";
 import { formatMoney, formatTime, ORDER_STATUS_ACCENT, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "../../lib/format";
 import StatusBadge from "../../components/StatusBadge";
+import { usePendingWebOrders } from "../../store/pendingWebOrders";
 import type { Order } from "../../types";
 import NewOrderPanel from "./NewOrderPanel";
 import OrderDetailPanel from "./OrderDetailPanel";
@@ -14,6 +15,12 @@ export default function CommandesPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const freshSelectedOrder = selectedOrder ? orders?.find((o) => o.id === selectedOrder.id) ?? selectedOrder : null;
+  const pendingWebOrderIds = usePendingWebOrders((s) => s.ids);
+
+  function handleOpenOrder(order: Order) {
+    usePendingWebOrders.getState().acknowledge(order.id);
+    setSelectedOrder(order);
+  }
 
   return (
     <div className="p-6">
@@ -52,11 +59,12 @@ export default function CommandesPage() {
           return (
             <button
               key={order.id}
-              onClick={() => setSelectedOrder(order)}
+              onClick={() => handleOpenOrder(order)}
               style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
               className={clsx(
                 "card-interactive list-item-in border-l-4 text-left tap-target",
-                ORDER_STATUS_ACCENT[order.status] ?? "border-l-burgundy/10"
+                ORDER_STATUS_ACCENT[order.status] ?? "border-l-burgundy/10",
+                pendingWebOrderIds.has(order.id) && "animate-pulse ring-2 ring-gold"
               )}
             >
               <div className="flex items-start justify-between">
@@ -68,7 +76,7 @@ export default function CommandesPage() {
                   <p className="text-xs text-burgundy/50">{formatTime(order.createdAt)}</p>
                   {order.source === OrderSource.SITE_WEB && (
                     <span className="mt-1 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-semibold text-gold-dark">
-                      Site web
+                      {pendingWebOrderIds.has(order.id) ? "🔔 Site web" : "Site web"}
                     </span>
                   )}
                 </div>

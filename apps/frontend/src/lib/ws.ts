@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { WsEvent, OrderSource, type WsMessage } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
-import { playNewOrderChime } from "./sound";
+import { usePendingWebOrders } from "../store/pendingWebOrders";
 import type { Order } from "../types";
 
 export function useRealtimeSync() {
@@ -28,12 +28,14 @@ export function useRealtimeSync() {
       socket.onmessage = (event) => {
         const message = JSON.parse(event.data) as WsMessage;
         switch (message.event) {
-          case WsEvent.ORDER_CREATED:
+          case WsEvent.ORDER_CREATED: {
             queryClient.invalidateQueries({ queryKey: ["orders"] });
-            if ((message.payload as Order | undefined)?.source === OrderSource.SITE_WEB) {
-              playNewOrderChime();
+            const order = message.payload as Order | undefined;
+            if (order?.source === OrderSource.SITE_WEB) {
+              usePendingWebOrders.getState().add(order.id);
             }
             break;
+          }
           case WsEvent.ORDER_UPDATED:
           case WsEvent.ORDER_CLOSED:
             queryClient.invalidateQueries({ queryKey: ["orders"] });

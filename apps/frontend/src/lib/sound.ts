@@ -29,8 +29,7 @@ export function initAudioUnlock() {
   window.addEventListener("keydown", unlock);
 }
 
-const RING_DURATION_SECONDS = 10;
-const RING_INTERVAL_SECONDS = 0.9;
+const RING_INTERVAL_MS = 900;
 
 /**
  * Un seul "ding-dong", à l'instant `start` (en secondes AudioContext). Onde carrée (plus riche
@@ -60,33 +59,54 @@ function scheduleDingDong(ctx: AudioContext, destination: AudioNode, start: numb
   });
 }
 
-/** Sonnerie de 10 secondes (ding-dong répété, volume maximisé) pour signaler une nouvelle commande site web. */
-export function playNewOrderChime() {
+let ringCompressor: DynamicsCompressorNode | null = null;
+let ringInterval: ReturnType<typeof setInterval> | null = null;
+
+function getRingCompressor(ctx: AudioContext): DynamicsCompressorNode {
+  if (!ringCompressor) {
+    ringCompressor = ctx.createDynamicsCompressor();
+    ringCompressor.threshold.value = -18;
+    ringCompressor.knee.value = 6;
+    ringCompressor.ratio.value = 16;
+    ringCompressor.attack.value = 0.002;
+    ringCompressor.release.value = 0.2;
+    ringCompressor.connect(ctx.destination);
+  }
+  return ringCompressor;
+}
+
+/**
+ * Sonne en continu (comme une notification de livraison) jusqu'à l'appel de `stopRinging()` —
+ * c'est à dire jusqu'à ce que le personnel ouvre la commande concernée. Rappeler cette fonction
+ * pendant qu'elle sonne déjà ne relance pas une seconde boucle.
+ */
+export function startRinging() {
   try {
     const ctx = getContext();
 
-    const schedule = () => {
-      const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.value = -18;
-      compressor.knee.value = 6;
-      compressor.ratio.value = 16;
-      compressor.attack.value = 0.002;
-      compressor.release.value = 0.2;
-      compressor.connect(ctx.destination);
-
-      const now = ctx.currentTime;
-      const repeats = Math.ceil(RING_DURATION_SECONDS / RING_INTERVAL_SECONDS);
-      for (let r = 0; r < repeats; r++) {
-        scheduleDingDong(ctx, compressor, now + r * RING_INTERVAL_SECONDS);
-      }
+    const begin = () => {
+      if (ringInterval) return;
+      const compressor = getRingCompressor(ctx);
+      scheduleDingDong(ctx, compressor, ctx.currentTime);
+      ringInterval = setInterval(() => {
+        scheduleDingDong(ctx, compressor, ctx.currentTime);
+      }, RING_INTERVAL_MS);
     };
 
     if (ctx.state === "suspended") {
-      ctx.resume().then(schedule).catch(() => undefined);
+      ctx.resume().then(begin).catch(() => undefined);
     } else {
-      schedule();
+      begin();
     }
   } catch {
     // Audio context unavailable — fail silently rather than breaking the order flow.
+  }
+}
+
+/** Coupe la sonnerie en cours (appelé quand il n'y a plus aucune commande site web non ouverte). */
+export function stopRinging() {
+  if (ringInterval) {
+    clearInterval(ringInterval);
+    ringInterval = null;
   }
 }
