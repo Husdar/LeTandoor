@@ -36,6 +36,9 @@ export const env = {
   // direct. IMAP (réception) n'est pas concerné, seul l'envoi l'est.
   brevoApiKey: process.env.BREVO_API_KEY,
   brevoSenderEmail: process.env.BREVO_SENDER_EMAIL ?? process.env.IMAP_USER,
+  // Liste de contacts Brevo (Contacts > Listes) ciblée par les campagnes marketing — à créer une
+  // fois dans Brevo, l'ID apparaît dans les paramètres de la liste.
+  brevoListId: process.env.BREVO_LIST_ID ? Number(process.env.BREVO_LIST_ID) : undefined,
   // Jeton partagé avec le petit relais d'impression local (voir apps/print-relay) — le backend
   // étant hébergé à distance, il ne peut pas atteindre directement les imprimantes du réseau
   // local du restaurant ; le relais tourne sur place et transmet les tickets en TCP.

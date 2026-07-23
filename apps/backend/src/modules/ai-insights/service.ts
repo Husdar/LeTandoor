@@ -1,6 +1,6 @@
 import { InsightKind, type Prisma } from "@prisma/client";
 import { prisma } from "../../db.js";
-import { env } from "../../env.js";
+import { callOpenRouter } from "../../ai/openrouter.js";
 import { startOfParisDay } from "../../timezone.js";
 import { getDashboardStats, type DashboardStats } from "../analytics/service.js";
 
@@ -40,43 +40,6 @@ PERTES ET REMISES (30 derniers jours)
 - Total des remises accordées : ${stats.discounts}€
 
 Analyse ces données et donne 4 à 6 conseils concrets et directement actionnables pour améliorer les ventes, réduire les pertes, et mieux organiser le personnel et les horaires. Compare aux périodes précédentes quand c'est pertinent (ex: hausse/baisse). Si une donnée manque ou est à zéro, dis-le simplement plutôt que d'inventer. Réponds uniquement en français, de façon directe et pratique, sans généralités vagues.`;
-}
-
-async function callOpenRouter(systemPrompt: string, userPrompt: string): Promise<string> {
-  if (!env.openRouterApiKey) {
-    throw new Error("OPENROUTER_API_KEY non configurée sur le serveur");
-  }
-
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.openRouterApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: env.openRouterModel,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.4,
-      max_tokens: 1200,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(`Erreur API IA (${response.status}) : ${text.slice(0, 300)}`);
-  }
-
-  const data = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("Réponse vide de l'IA");
-  }
-  return content;
 }
 
 export async function generateInsight() {

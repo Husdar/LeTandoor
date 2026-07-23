@@ -164,3 +164,32 @@ export interface AiInsight {
   content: string;
   createdAt: string;
 }
+
+export interface MarketingContact {
+  id: string;
+  email: string;
+  name?: string | null;
+  subscribed: boolean;
+  source: string;
+  createdAt: string;
+}
+
+export type MarketingCampaignStatus = "BROUILLON" | "ENVOYEE" | "ECHEC";
+
+export interface MarketingCampaign {
+  id: string;
+  subject: string;
+  bodyText: string;
+  status: MarketingCampaignStatus;
+  recipientCount: number;
+  errorMessage?: string | null;
+  sentAt?: string | null;
+  creator?: { name: string } | null;
+  createdAt: string;
+}
+
+export interface MarketingSuggestion {
+  title: string;
+  rationale: string;
+  brief: string;
+}

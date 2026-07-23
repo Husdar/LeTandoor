@@ -188,3 +188,20 @@ export const createManualRevenueSchema = z.object({
   label: z.string().max(200).optional(),
 });
 export type CreateManualRevenueInput = z.infer<typeof createManualRevenueSchema>;
+
+export const importMarketingContactsSchema = z.object({
+  text: z.string().min(1),
+});
+export type ImportMarketingContactsInput = z.infer<typeof importMarketingContactsSchema>;
+
+export const generateCampaignDraftSchema = z.object({
+  brief: z.string().min(3).max(500),
+});
+export type GenerateCampaignDraftInput = z.infer<typeof generateCampaignDraftSchema>;
+
+export const sendCampaignSchema = z.object({
+  subject: z.string().min(1).max(200),
+  message: z.string().min(1).max(20_000),
+  contactIds: z.array(z.string()).optional(),
+});
+export type SendCampaignInput = z.infer<typeof sendCampaignSchema>;

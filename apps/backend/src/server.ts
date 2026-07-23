@@ -15,6 +15,7 @@ import analyticsRoutes from "./modules/analytics/routes.js";
 import manualRevenueRoutes from "./modules/manual-revenue/routes.js";
 import aiInsightsRoutes from "./modules/ai-insights/routes.js";
 import aiChatRoutes from "./modules/ai-chat/routes.js";
+import marketingRoutes from "./modules/marketing/routes.js";
 import wsRoute from "./ws/route.js";
 import { startEmailOrderListener } from "./modules/email-orders/imap-listener.js";
 import { startDailyInsightScheduler } from "./modules/ai-insights/scheduler.js";
@@ -41,6 +42,7 @@ async function main() {
   await fastify.register(manualRevenueRoutes);
   await fastify.register(aiInsightsRoutes);
   await fastify.register(aiChatRoutes);
+  await fastify.register(marketingRoutes);
   await fastify.register(wsRoute);
 
   fastify.get("/api/health", async () => ({ status: "ok" }));

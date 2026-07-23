@@ -99,6 +99,42 @@ enum InsightKind {
   QUOTIDIEN
 }
 
+enum MarketingCampaignStatus {
+  BROUILLON
+  ENVOYEE
+  ECHEC
+}
+
+model MarketingContact {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  /// Consentement marketing explicite (RGPD) — false par défaut, ne jamais cibler sans "true".
+  subscribed Boolean  @default(false)
+  source     String   @default("IMPORT")
+  createdAt  DateTime @default(now())
+
+  @@index([subscribed])
+  @@map("marketing_contacts")
+}
+
+model MarketingCampaign {
+  id              String                  @id @default(cuid())
+  subject         String
+  bodyHtml        String
+  bodyText        String
+  status          MarketingCampaignStatus @default(BROUILLON)
+  recipientCount  Int                     @default(0)
+  brevoCampaignId Int?
+  errorMessage    String?
+  sentAt          DateTime?
+  createdBy       String
+  creator         User                    @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime                @default(now())
+
+  @@map("marketing_campaigns")
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -112,6 +148,7 @@ model User {
   orders               Order[]
   auditLogs            AuditLog[]
   manualRevenueEntries ManualRevenueEntry[]
+  marketingCampaigns   MarketingCampaign[]
 
   @@map("users")
 }

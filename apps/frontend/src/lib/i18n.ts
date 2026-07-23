@@ -12,6 +12,7 @@ const dict: Dict = {
   "nav.reservations": { fr: "Réservations", ur: "بکنگ" },
   "nav.performances": { fr: "Performances", ur: "کارکردگی" },
   "nav.conseils": { fr: "Conseils", ur: "مشورے" },
+  "nav.marketing": { fr: "Marketing", ur: "مارکیٹنگ" },
   "nav.admin": { fr: "Administration", ur: "انتظامیہ" },
 
   "layout.subtitle": { fr: "Gestion du restaurant", ur: "ریسٹورنٹ کا انتظام" },

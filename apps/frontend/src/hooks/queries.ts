@@ -1,6 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import type { MenuCategory, RestaurantTable, Order, Reservation, DashboardStats, AiInsight, ManualRevenueEntry } from "../types";
+import type {
+  MenuCategory,
+  RestaurantTable,
+  Order,
+  Reservation,
+  DashboardStats,
+  AiInsight,
+  ManualRevenueEntry,
+  MarketingContact,
+  MarketingCampaign,
+} from "../types";
 
 export function useMenu() {
   return useQuery({
@@ -49,5 +59,19 @@ export function useManualRevenue(from: string, to: string) {
   return useQuery({
     queryKey: ["manual-revenue", from, to],
     queryFn: () => api.get<ManualRevenueEntry[]>(`/manual-revenue?from=${from}&to=${to}`),
+  });
+}
+
+export function useMarketingContacts() {
+  return useQuery({
+    queryKey: ["marketing-contacts"],
+    queryFn: () => api.get<MarketingContact[]>("/marketing/contacts"),
+  });
+}
+
+export function useMarketingCampaigns() {
+  return useQuery({
+    queryKey: ["marketing-campaigns"],
+    queryFn: () => api.get<MarketingCampaign[]>("/marketing/campaigns"),
   });
 }

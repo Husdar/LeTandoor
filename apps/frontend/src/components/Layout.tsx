@@ -16,6 +16,7 @@ import {
   IconReservations,
   IconPerformance,
   IconAdvice,
+  IconMarketing,
   IconAdmin,
   IconMenu,
   IconClose,
@@ -30,6 +31,7 @@ const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[]; icon: ty
   { to: "/reservations", labelKey: "nav.reservations", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconReservations },
   { to: "/performances", labelKey: "nav.performances", roles: [Role.ADMIN, Role.MANAGER], icon: IconPerformance },
   { to: "/conseils", labelKey: "nav.conseils", roles: [Role.ADMIN, Role.MANAGER], icon: IconAdvice },
+  { to: "/marketing", labelKey: "nav.marketing", roles: [Role.ADMIN, Role.MANAGER], icon: IconMarketing },
   { to: "/admin", labelKey: "nav.admin", roles: [Role.ADMIN], icon: IconAdmin },
 ];
 

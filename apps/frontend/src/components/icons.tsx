@@ -97,6 +97,15 @@ export function IconAdmin(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconMarketing(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3 11v2a2 2 0 0 0 2 2h1l1 5h2l-1-5h2l8 4V7l-8 4H6a2 2 0 0 0-2 2Z" />
+      <path d="M17 9v6" />
+    </Icon>
+  );
+}
+
 export function IconMenu(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
