@@ -4,7 +4,15 @@ import clsx from "clsx";
 import { OrderItemStatus, OrderStatus } from "@le-tandoor/shared";
 import { useActiveOrders } from "../../hooks/queries";
 import { api } from "../../lib/api";
-import { formatMoney, formatTime, ORDER_ITEM_STATUS_LABELS, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "../../lib/format";
+import {
+  formatMoney,
+  formatTime,
+  ORDER_ITEM_STATUS_LABELS,
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_ACCENT,
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_TEXT,
+} from "../../lib/format";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import StatusBadge from "../../components/StatusBadge";
 import type { Order } from "../../types";
@@ -43,7 +51,7 @@ export default function CuisinePage() {
     const isOpen = expanded.has(order.id);
     const tableLabel = order.orderTables[0]?.table?.name;
     return (
-      <div key={order.id} className="card">
+      <div key={order.id} className={clsx("card border-l-4", ORDER_TYPE_ACCENT[order.type] ?? "border-l-burgundy/10")}>
         <button className="w-full text-left" onClick={() => toggle(order.id)}>
           <div className="flex items-center justify-between">
             <p className={clsx("font-display text-lg font-semibold text-burgundy", urdu && "font-urdu")}>
@@ -55,10 +63,14 @@ export default function CuisinePage() {
               label={urdu ? t(`orderStatus.${order.status}` as TranslationKey) : ORDER_STATUS_LABELS[order.status]}
             />
           </div>
-          <div className="mt-2 flex items-center justify-between text-sm text-burgundy/60">
+          <div className="mt-2 flex items-center justify-between text-sm">
             <span>
-              {urdu ? t(`orderType.${order.type}` as TranslationKey) : ORDER_TYPE_LABELS[order.type]}
-              {tableLabel ? ` · ${tableLabel}` : ""} · {formatTime(order.createdAt)}
+              <span className={clsx("font-semibold", ORDER_TYPE_TEXT[order.type] ?? "text-burgundy")}>
+                {urdu ? t(`orderType.${order.type}` as TranslationKey) : ORDER_TYPE_LABELS[order.type]}
+              </span>
+              <span className="text-burgundy/60">
+                {tableLabel ? ` · ${tableLabel}` : ""} · {formatTime(order.createdAt)}
+              </span>
             </span>
             <span className="font-semibold text-gold-dark">{formatMoney(order.total)}</span>
           </div>

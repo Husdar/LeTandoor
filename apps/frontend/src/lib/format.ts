@@ -64,3 +64,16 @@ export const ORDER_STATUS_ACCENT: Record<string, string> = {
   TERMINEE: "border-l-gray-300",
   ANNULEE: "border-l-red-400",
 };
+
+/** Couleur par type de commande (sur place / à emporter / livraison), pour repérer le canal d'un coup d'œil. */
+export const ORDER_TYPE_ACCENT: Record<string, string> = {
+  SUR_PLACE: "border-l-burgundy",
+  EMPORTER: "border-l-amber-500",
+  LIVRAISON: "border-l-blue-500",
+};
+
+export const ORDER_TYPE_TEXT: Record<string, string> = {
+  SUR_PLACE: "text-burgundy",
+  EMPORTER: "text-amber-700",
+  LIVRAISON: "text-blue-700",
+};

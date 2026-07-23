@@ -2,7 +2,14 @@ import { useState } from "react";
 import clsx from "clsx";
 import { OrderSource } from "@le-tandoor/shared";
 import { useActiveOrders } from "../../hooks/queries";
-import { formatMoney, formatTime, ORDER_STATUS_ACCENT, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "../../lib/format";
+import {
+  formatMoney,
+  formatTime,
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_ACCENT,
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_TEXT,
+} from "../../lib/format";
 import StatusBadge from "../../components/StatusBadge";
 import { IconBell, IconOrders } from "../../components/icons";
 import { usePendingWebOrders } from "../../store/pendingWebOrders";
@@ -66,13 +73,13 @@ export default function CommandesPage() {
               style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
               className={clsx(
                 "card-interactive list-item-in border-l-4 text-left tap-target",
-                ORDER_STATUS_ACCENT[order.status] ?? "border-l-burgundy/10",
+                ORDER_TYPE_ACCENT[order.type] ?? "border-l-burgundy/10",
                 pendingWebOrderIds.has(order.id) && "animate-pulse ring-2 ring-gold"
               )}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-burgundy">
+                  <p className={clsx("font-semibold", ORDER_TYPE_TEXT[order.type] ?? "text-burgundy")}>
                     {ORDER_TYPE_LABELS[order.type]}
                     {tableLabel ? ` — ${tableLabel}` : ""}
                   </p>

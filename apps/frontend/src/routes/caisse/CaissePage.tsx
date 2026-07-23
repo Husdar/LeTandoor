@@ -2,7 +2,14 @@ import { useState } from "react";
 import clsx from "clsx";
 import { OrderSource } from "@le-tandoor/shared";
 import { useActiveOrders } from "../../hooks/queries";
-import { formatMoney, formatTime, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "../../lib/format";
+import {
+  formatMoney,
+  formatTime,
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_ACCENT,
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_TEXT,
+} from "../../lib/format";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import StatusBadge from "../../components/StatusBadge";
 import type { Order } from "../../types";
@@ -29,10 +36,10 @@ export default function CaissePage() {
         {orders?.map((order) => {
           const tableLabel = order.orderTables[0]?.table?.name;
           return (
-            <div key={order.id} className="card">
+            <div key={order.id} className={clsx("card border-l-4", ORDER_TYPE_ACCENT[order.type] ?? "border-l-burgundy/10")}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-burgundy">
+                  <p className={clsx("font-semibold", ORDER_TYPE_TEXT[order.type] ?? "text-burgundy")}>
                     {urdu ? t(`orderType.${order.type}` as TranslationKey) : ORDER_TYPE_LABELS[order.type]}
                     {tableLabel ? ` — ${tableLabel}` : ""}
                   </p>
