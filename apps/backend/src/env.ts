@@ -31,6 +31,11 @@ export const env = {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
   orderEmailSubjectPattern: process.env.ORDER_EMAIL_SUBJECT_PATTERN ?? "commande",
+  // iCloud (smtp.mail.me.com) bloque les connexions SMTP sortantes depuis des IP de datacenter
+  // (Render, AWS...) — l'envoi des emails clients passe donc par l'API Brevo plutôt que par SMTP
+  // direct. IMAP (réception) n'est pas concerné, seul l'envoi l'est.
+  brevoApiKey: process.env.BREVO_API_KEY,
+  brevoSenderEmail: process.env.BREVO_SENDER_EMAIL ?? process.env.IMAP_USER,
   // Jeton partagé avec le petit relais d'impression local (voir apps/print-relay) — le backend
   // étant hébergé à distance, il ne peut pas atteindre directement les imprimantes du réseau
   // local du restaurant ; le relais tourne sur place et transmet les tickets en TCP.

@@ -28,7 +28,6 @@
     "jsonwebtoken": "^9.0.2",
     "mailparser": "^3.7.2",
     "node-thermal-printer": "^4.6.0",
-    "nodemailer": "^9.0.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -36,7 +35,6 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/mailparser": "^3.4.5",
     "@types/node": "^22.7.5",
-    "@types/nodemailer": "^8.0.1",
     "prisma": "^5.20.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
