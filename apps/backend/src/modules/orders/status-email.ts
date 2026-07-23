@@ -196,6 +196,7 @@ export async function notifyOrderStatusChange(
 
   try {
     await sendCustomerEmail(order.customerEmail, email.subject, email.text, email.html);
+    console.log(`[status-email] email "${order.status}" envoyé pour la commande ${order.id}`);
   } catch (err) {
     console.error(`[status-email] échec d'envoi pour la commande ${order.id}`, err);
   }
@@ -209,6 +210,7 @@ export async function sendConfirmationEmail(order: OrderWithRelations): Promise<
 
   try {
     await sendCustomerEmail(order.customerEmail, email.subject, email.text, email.html);
+    console.log(`[status-email] email de confirmation envoyé pour la commande ${order.id}`);
   } catch (err) {
     console.error(`[status-email] échec d'envoi de confirmation pour la commande ${order.id}`, err);
   }
