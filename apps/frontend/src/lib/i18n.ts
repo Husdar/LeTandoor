@@ -16,6 +16,8 @@ const dict: Dict = {
 
   "layout.subtitle": { fr: "Gestion du restaurant", ur: "ریسٹورنٹ کا انتظام" },
   "layout.logout": { fr: "Déconnexion", ur: "لاگ آؤٹ" },
+  "layout.openMenu": { fr: "Ouvrir le menu", ur: "مینو کھولیں" },
+  "layout.closeMenu": { fr: "Fermer le menu", ur: "مینو بند کریں" },
 
   "login.subtitle": { fr: "Espace de gestion du restaurant", ur: "ریسٹورنٹ کے انتظام کا حصہ" },
   "login.email": { fr: "Email", ur: "ای میل" },

@@ -96,7 +96,7 @@ export default function CuisinePage() {
   }
 
   return (
-    <div className="grid h-full grid-cols-3 gap-4 p-6">
+    <div className="grid grid-cols-1 gap-4 p-4 sm:h-full sm:grid-cols-3 sm:p-6">
       {COLUMNS.map((col) => {
         const columnOrders = sorted.filter((order) => order.status === col.status);
         return (

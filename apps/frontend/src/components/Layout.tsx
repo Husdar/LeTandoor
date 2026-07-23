@@ -27,12 +27,14 @@ export default function Layout() {
   const location = useLocation();
   const { t, lang } = useT();
   const [changingPassword, setChangingPassword] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter((item) => user && item.roles.includes(user.role));
+  const urdu = lang === "ur";
 
   // La page Commandes reste toujours en français / LTR, quel que soit le réglage de langue.
   const isCommandesRoute = location.pathname.startsWith("/commandes");
-  const contentIsUrdu = lang === "ur" && !isCommandesRoute;
+  const contentIsUrdu = urdu && !isCommandesRoute;
 
   async function handleLogout() {
     await api.post("/auth/logout").catch(() => undefined);
@@ -43,21 +45,20 @@ export default function Layout() {
   return (
     <div className="flex h-screen flex-col bg-cream">
       <header
-        className={clsx(
-          "flex items-center justify-between bg-burgundy px-6 py-3 text-cream shadow-lg",
-          lang === "ur" && "flex-row-reverse"
-        )}
-        dir={lang === "ur" ? "rtl" : "ltr"}
+        className={clsx("flex items-center justify-between bg-burgundy px-4 py-3 text-cream shadow-lg sm:px-6", urdu && "flex-row-reverse")}
+        dir={urdu ? "rtl" : "ltr"}
         style={{ boxShadow: "0 4px 16px -4px rgba(74, 13, 24, 0.35)" }}
       >
-        <div className={clsx("flex items-center gap-3", lang === "ur" && "flex-row-reverse")}>
+        <div className={clsx("flex min-w-0 items-center gap-2 sm:gap-3", urdu && "flex-row-reverse")}>
           <LanguageToggle />
-          <span className="font-display text-2xl font-bold tracking-wide text-gold">Le Tandoor</span>
-          <span className={clsx("hidden text-sm text-cream/70 sm:inline", lang === "ur" && "font-urdu text-base")}>
+          <span className="truncate font-display text-lg font-bold tracking-wide text-gold sm:text-2xl">Le Tandoor</span>
+          <span className={clsx("hidden text-sm text-cream/70 sm:inline", urdu && "font-urdu text-base")}>
             {t("layout.subtitle")}
           </span>
         </div>
-        <div className={clsx("flex items-center gap-4", lang === "ur" && "flex-row-reverse")}>
+
+        {/* Écrans larges : tout affiché en ligne. Sur mobile, un seul bouton menu ouvre le tiroir ci-dessous. */}
+        <div className={clsx("hidden items-center gap-4 sm:flex", urdu && "flex-row-reverse")}>
           <button
             onClick={() => setChangingPassword(true)}
             title={t("changePassword.open")}
@@ -67,21 +68,64 @@ export default function Layout() {
           </button>
           <button
             onClick={handleLogout}
-            className={clsx("btn-outline !border-cream/30 !text-cream !bg-transparent", lang === "ur" && "font-urdu text-base")}
+            className={clsx("btn-outline !border-cream/30 !text-cream !bg-transparent", urdu && "font-urdu text-base")}
           >
             {t("layout.logout")}
           </button>
         </div>
+
+        <button
+          onClick={() => setMobileMenuOpen((v) => !v)}
+          aria-label={mobileMenuOpen ? t("layout.closeMenu") : t("layout.openMenu")}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl text-gold transition hover:bg-cream/10 sm:hidden"
+        >
+          {mobileMenuOpen ? "✕" : "☰"}
+        </button>
       </header>
+
+      {/* Tiroir de navigation mobile : remplace la barre horizontale + regroupe compte/langue/déconnexion. */}
+      {mobileMenuOpen && (
+        <div className="border-b border-burgundy/10 bg-white p-3 shadow-md sm:hidden" dir={urdu ? "rtl" : "ltr"}>
+          <nav className="flex flex-col gap-1">
+            {visibleItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  clsx(
+                    "tap-target flex items-center rounded-xl px-4 text-base font-medium transition-colors",
+                    urdu && "font-urdu text-lg",
+                    isActive ? "bg-gold/15 text-burgundy" : "text-burgundy/60 hover:bg-cream"
+                  )
+                }
+              >
+                {t(item.labelKey)}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="mt-3 flex items-center justify-between border-t border-burgundy/10 pt-3">
+            <button
+              onClick={() => {
+                setChangingPassword(true);
+                setMobileMenuOpen(false);
+              }}
+              className="text-sm text-burgundy/70 underline-offset-2 hover:underline"
+            >
+              {user?.name} · {user?.role}
+            </button>
+          </div>
+          <button onClick={handleLogout} className="btn-outline mt-3 w-full">
+            {t("layout.logout")}
+          </button>
+        </div>
+      )}
 
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
 
       <nav
-        className={clsx(
-          "flex gap-1 overflow-x-auto border-b border-burgundy/10 bg-white px-4",
-          lang === "ur" && "flex-row-reverse"
-        )}
-        dir={lang === "ur" ? "rtl" : "ltr"}
+        className={clsx("hidden gap-1 overflow-x-auto border-b border-burgundy/10 bg-white px-4 sm:flex", urdu && "flex-row-reverse")}
+        dir={urdu ? "rtl" : "ltr"}
       >
         {visibleItems.map((item) => (
           <NavLink
@@ -89,8 +133,8 @@ export default function Layout() {
             to={item.to}
             className={({ isActive }) =>
               clsx(
-                "tap-target flex items-center border-b-[3px] px-4 py-3 text-sm font-medium whitespace-nowrap transition-all duration-200",
-                lang === "ur" && "font-urdu text-base",
+                "flex shrink-0 items-center whitespace-nowrap border-b-[3px] px-4 py-3 text-sm font-medium transition-all duration-200",
+                urdu && "font-urdu text-base",
                 isActive
                   ? "border-gold text-burgundy"
                   : "border-transparent text-burgundy/50 hover:border-gold/30 hover:text-burgundy"

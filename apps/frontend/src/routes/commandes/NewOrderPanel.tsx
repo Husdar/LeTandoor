@@ -118,8 +118,8 @@ export default function NewOrderPanel({ onClose }: { onClose: () => void }) {
         </button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-auto p-6">
+      <div className="flex flex-1 flex-col overflow-y-auto sm:flex-row sm:overflow-hidden">
+        <div className="flex-1 p-4 sm:overflow-auto sm:p-6">
           <div className="mb-4 flex gap-2">
             {(
               [
@@ -210,9 +210,9 @@ export default function NewOrderPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <aside className="flex w-80 flex-col border-l border-burgundy/10 bg-white p-4">
+        <aside className="flex shrink-0 flex-col border-t border-burgundy/10 bg-white p-4 sm:w-80 sm:border-l sm:border-t-0">
           <h3 className="mb-3 font-display text-lg font-semibold text-burgundy">Panier</h3>
-          <div className="flex-1 space-y-2 overflow-auto">
+          <div className="space-y-2 sm:flex-1 sm:overflow-auto">
             {cart.length === 0 && <p className="text-sm text-burgundy/50">Aucun article ajouté</p>}
             {cart.map((line) => (
               <div key={line.localId} className="rounded-xl border border-burgundy/10 p-3">
