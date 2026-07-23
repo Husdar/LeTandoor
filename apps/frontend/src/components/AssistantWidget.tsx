@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { api, ApiError } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { IconChat, IconClose } from "./icons";
+import SimpleMarkdown from "./SimpleMarkdown";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -74,11 +75,13 @@ export default function AssistantWidget() {
               <div key={i} className={clsx("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                 <div
                   className={clsx(
-                    "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm",
-                    m.role === "user" ? "bg-burgundy text-cream" : "border border-burgundy/10 bg-white text-burgundy"
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                    m.role === "user"
+                      ? "whitespace-pre-wrap bg-burgundy text-cream"
+                      : "border border-burgundy/10 bg-white text-burgundy"
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? <SimpleMarkdown text={m.content} /> : m.content}
                 </div>
               </div>
             ))}

@@ -22,7 +22,10 @@ export default function CampaignHistory() {
       {campaigns?.length === 0 && <p className="text-sm text-burgundy/40">Aucune campagne envoyée pour le moment.</p>}
       <ul className="space-y-2">
         {campaigns?.map((c) => (
-          <li key={c.id} className="flex items-center justify-between rounded-lg border border-burgundy/10 p-3 text-sm">
+          <li
+            key={c.id}
+            className="flex flex-col gap-2 rounded-lg border border-burgundy/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
             <div className="min-w-0">
               <p className="truncate font-medium text-burgundy">{c.subject}</p>
               <p className="text-xs text-burgundy/50">

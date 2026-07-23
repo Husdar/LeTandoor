@@ -4,6 +4,7 @@ import { useAiInsights } from "../../hooks/queries";
 import { api, ApiError } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useState } from "react";
+import SimpleMarkdown from "../../components/SimpleMarkdown";
 
 export default function ConseilsPage() {
   const { data: insights, isLoading } = useAiInsights();
@@ -23,7 +24,7 @@ export default function ConseilsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className={clsx("font-display text-2xl font-semibold text-burgundy", urdu && "font-urdu")}>
           {t("conseils.title")}
         </h1>
@@ -43,7 +44,7 @@ export default function ConseilsPage() {
 
       <div className="space-y-4">
         {insights?.map((insight) => (
-          <div key={insight.id} className="card whitespace-pre-wrap text-sm leading-relaxed text-burgundy/90">
+          <div key={insight.id} className="card text-sm leading-relaxed text-burgundy/90">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <p className="text-xs font-medium uppercase tracking-wide text-gold-dark">
                 {t("conseils.basedOn")}{" "}
@@ -61,7 +62,7 @@ export default function ConseilsPage() {
                 </span>
               )}
             </div>
-            {insight.content}
+            <SimpleMarkdown text={insight.content} />
           </div>
         ))}
       </div>

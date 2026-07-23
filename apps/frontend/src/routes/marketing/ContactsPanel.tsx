@@ -52,15 +52,15 @@ export default function ContactsPanel() {
           onChange={(e) => setText(e.target.value)}
         />
       </div>
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <button
-          className="btn-gold !py-2 text-sm"
+          className="btn-gold w-full !py-2 text-sm sm:w-auto"
           disabled={!text.trim() || importMutation.isPending}
           onClick={() => importMutation.mutate(text)}
         >
           {importMutation.isPending ? "Import…" : "Importer le texte collé"}
         </button>
-        <button className="btn-outline !py-2 text-sm" onClick={() => fileInputRef.current?.click()}>
+        <button className="btn-outline w-full !py-2 text-sm sm:w-auto" onClick={() => fileInputRef.current?.click()}>
           Importer un fichier
         </button>
         <input
@@ -90,10 +90,13 @@ export default function ContactsPanel() {
         <span className="font-semibold text-green-700">{subscribedCount} consentant{subscribedCount > 1 ? "s" : ""}</span>
       </div>
 
-      <div className="max-h-64 space-y-1 overflow-y-auto rounded-xl border border-burgundy/10 p-2">
+      <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-xl border border-burgundy/10 p-2">
         {contacts?.length === 0 && <p className="p-2 text-sm text-burgundy/40">Aucun contact importé.</p>}
         {contacts?.map((c) => (
-          <div key={c.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-cream/70">
+          <div
+            key={c.id}
+            className="flex flex-col gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-cream/70 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:py-1.5"
+          >
             <div className="min-w-0">
               <p className="truncate text-burgundy">{c.name || c.email}</p>
               {c.name && <p className="truncate text-xs text-burgundy/50">{c.email}</p>}

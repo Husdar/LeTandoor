@@ -80,10 +80,10 @@ export default function CampaignComposer() {
         </p>
 
         <div className="mb-3 flex flex-col gap-2 rounded-xl bg-cream/70 p-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm font-medium text-burgundy">Idées basées sur vos vraies données</p>
             <button
-              className="text-xs font-medium text-gold-dark hover:underline"
+              className="self-start text-xs font-medium text-gold-dark hover:underline sm:self-auto"
               disabled={suggestionsQuery.isFetching}
               onClick={() => suggestionsQuery.refetch()}
             >
@@ -146,7 +146,7 @@ export default function CampaignComposer() {
       <div className="card">
         <h2 className="mb-3 font-display text-lg font-semibold text-burgundy">Aperçu</h2>
         <div className="overflow-hidden rounded-xl border border-burgundy/10 bg-cream/40">
-          <iframe title="Aperçu email" srcDoc={previewHtml} className="h-[560px] w-full" />
+          <iframe title="Aperçu email" srcDoc={previewHtml} className="h-[420px] w-full sm:h-[560px]" />
         </div>
       </div>
     </div>
