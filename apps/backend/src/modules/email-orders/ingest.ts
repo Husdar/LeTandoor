@@ -3,6 +3,7 @@ import { prisma } from "../../db.js";
 import { broadcast } from "../../ws/hub.js";
 import { fullOrderInclude } from "../orders/order-include.js";
 import { printOrder } from "../print/service.js";
+import { sendConfirmationEmail } from "../orders/status-email.js";
 import { matchMenuItem } from "./matcher.js";
 import { parseOrderEmail, resolveRequestedTime, type ParsedEmailOrder } from "./parser.js";
 
@@ -70,6 +71,7 @@ export async function ingestOrderEmail(params: {
         source: OrderSource.SITE_WEB,
         externalRef: parsed.externalRef,
         customerName: parsed.customerName,
+        customerEmail: parsed.customerEmail,
         customerPhone: parsed.customerPhone,
         deliveryAddress: parsed.deliveryAddress,
         requestedFor,
@@ -113,6 +115,10 @@ export async function ingestOrderEmail(params: {
   );
   printOrder(order.id, PrintTicketType.RECU).catch((err) =>
     console.error("[print] échec impression reçu (commande site web)", err)
+  );
+
+  sendConfirmationEmail(order).catch((err) =>
+    console.error("[status-email] échec envoi confirmation (commande site web)", err)
   );
 
   return { status: EmailIngestStatus.TRAITE, orderId: order.id };

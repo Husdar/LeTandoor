@@ -16,6 +16,7 @@ import { recordAudit } from "../../audit.js";
 import { broadcast } from "../../ws/hub.js";
 import { fullOrderInclude } from "./order-include.js";
 import { printOrder } from "../print/service.js";
+import { notifyOrderStatusChange } from "./status-email.js";
 
 export { fullOrderInclude };
 
@@ -163,6 +164,9 @@ export async function addOrderItem(orderId: string, input: OrderItemInput, userI
   });
 
   broadcast(WsEvent.ORDER_UPDATED, updated);
+  notifyOrderStatusChange(updated, order.status).catch((err) =>
+    console.error("[status-email] notification échouée", err)
+  );
   return updated;
 }
 
@@ -173,6 +177,7 @@ export async function updateOrderItemStatus(
   userId: string
 ) {
   const item = await prisma.orderItem.findUniqueOrThrow({ where: { id: orderItemId } });
+  const orderBefore = await prisma.order.findUniqueOrThrow({ where: { id: item.orderId } });
 
   const updated = await prisma.$transaction(async (tx) => {
     await tx.orderItem.update({
@@ -211,10 +216,15 @@ export async function updateOrderItemStatus(
   });
 
   broadcast(WsEvent.ORDER_UPDATED, updated);
+  notifyOrderStatusChange(updated, orderBefore.status).catch((err) =>
+    console.error("[status-email] notification échouée", err)
+  );
   return updated;
 }
 
 export async function advanceOrderItems(orderId: string, status: OrderItemStatus, userId: string) {
+  const orderBefore = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+
   const updated = await prisma.$transaction(async (tx) => {
     await tx.orderItem.updateMany({
       where: { orderId, status: { not: OrderItemStatus.ANNULE } },
@@ -232,6 +242,9 @@ export async function advanceOrderItems(orderId: string, status: OrderItemStatus
   });
 
   broadcast(WsEvent.ORDER_UPDATED, updated);
+  notifyOrderStatusChange(updated, orderBefore.status).catch((err) =>
+    console.error("[status-email] notification échouée", err)
+  );
   return updated;
 }
 
@@ -241,6 +254,8 @@ export async function updateOrderStatus(
   reason: string | undefined,
   userId: string
 ) {
+  const orderBefore = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+
   const updated = await prisma.$transaction(async (tx) => {
     const order = await tx.order.update({
       where: { id: orderId },
@@ -275,6 +290,9 @@ export async function updateOrderStatus(
       broadcast(WsEvent.TABLE_UPDATED, ot.table);
     }
   }
+  notifyOrderStatusChange(updated, orderBefore.status).catch((err) =>
+    console.error("[status-email] notification échouée", err)
+  );
   return updated;
 }
 

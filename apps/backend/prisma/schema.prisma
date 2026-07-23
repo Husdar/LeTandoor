@@ -206,6 +206,7 @@ model Order {
   serverId         String?
   server           User?       @relation(fields: [serverId], references: [id], onDelete: SetNull)
   customerName     String?
+  customerEmail    String?
   customerPhone    String?
   deliveryAddress  String?
   /// Heure de retrait/livraison demandée par le client (ex: commande site web avec créneau choisi).

@@ -84,6 +84,7 @@ export interface Order {
   serverId?: string | null;
   server?: { id: string; name: string } | null;
   customerName?: string | null;
+  customerEmail?: string | null;
   customerPhone?: string | null;
   deliveryAddress?: string | null;
   requestedFor?: string | null;

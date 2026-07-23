@@ -110,6 +110,7 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
             <p className="text-sm text-burgundy/60">
               {order.customerName ?? ""} {order.customerPhone ?? ""}
             </p>
+            {order.customerEmail && <p className="text-sm text-burgundy/60">{order.customerEmail}</p>}
             {order.deliveryAddress && <p className="text-sm text-burgundy/60">{order.deliveryAddress}</p>}
             {order.requestedFor && (
               <p className="mt-1 text-sm font-semibold text-gold-dark">
