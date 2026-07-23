@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { useDashboardStats } from "../../hooks/queries";
 import { useT } from "../../lib/i18n";
 import { formatMoney } from "../../lib/format";
+import ManualRevenueForm from "./ManualRevenueForm";
 
 const CHANNEL_LABELS: Record<string, string> = {
   SUR_PLACE: "Sur place",
@@ -21,11 +22,13 @@ function KpiCard({
   value,
   previous,
   urdu,
+  hint,
 }: {
   label: string;
   value: number;
   previous?: number;
   urdu: boolean;
+  hint?: string;
 }) {
   const v = previous !== undefined ? variation(value, previous) : null;
   return (
@@ -37,6 +40,7 @@ function KpiCard({
           {v.positive ? "▲" : "▼"} {Math.abs(v.pct)}%
         </p>
       )}
+      {hint && <p className="mt-1 text-xs text-burgundy/40">{hint}</p>}
     </div>
   );
 }
@@ -66,10 +70,20 @@ export default function PerformancesPage() {
       </h1>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <KpiCard label={t("performances.today")} value={stats.revenue.today} previous={stats.revenue.yesterday} urdu={urdu} />
+        <KpiCard
+          label={t("performances.today")}
+          value={stats.revenue.today}
+          previous={stats.revenue.yesterday}
+          urdu={urdu}
+          hint={stats.manualRevenueToday > 0 ? `dont ${formatMoney(stats.manualRevenueToday)} CB manuel` : undefined}
+        />
         <KpiCard label={t("performances.week")} value={stats.revenue.thisWeek} previous={stats.revenue.lastWeek} urdu={urdu} />
         <KpiCard label={t("performances.month")} value={stats.revenue.thisMonth} previous={stats.revenue.lastMonth} urdu={urdu} />
         <KpiCard label={t("performances.year")} value={stats.revenue.thisYear} previous={stats.revenue.lastYear} urdu={urdu} />
+      </div>
+
+      <div className="mt-4">
+        <ManualRevenueForm />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">

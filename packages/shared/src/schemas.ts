@@ -181,3 +181,10 @@ export const testPrinterSchema = z.object({
   port: z.number().int().default(9100),
 });
 export type TestPrinterInput = z.infer<typeof testPrinterSchema>;
+
+export const createManualRevenueSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date au format AAAA-MM-JJ requise"),
+  amount: z.number().positive(),
+  label: z.string().max(200).optional(),
+});
+export type CreateManualRevenueInput = z.infer<typeof createManualRevenueSchema>;

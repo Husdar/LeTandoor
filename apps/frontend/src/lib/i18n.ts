@@ -125,6 +125,16 @@ const dict: Dict = {
   "performances.noData": { fr: "Pas encore de données sur cette période.", ur: "اس مدت کے لیے ابھی کوئی ڈیٹا نہیں۔" },
   "performances.orders": { fr: "commandes", ur: "آرڈرز" },
   "performances.sold": { fr: "vendus", ur: "فروخت شدہ" },
+  "performances.manualTitle": { fr: "CA carte bancaire (hors application)", ur: "کارڈ کی آمدنی (ایپ کے باہر)" },
+  "performances.manualHint": {
+    fr: "Pour le chiffre d'affaires encaissé sur un terminal de carte non relié à l'application — s'ajoute au total du jour.",
+    ur: "کارڈ ٹرمینل پر وصول ہونے والی آمدنی کے لیے جو ایپ سے منسلک نہیں ہے — یہ دن کی کل رقم میں شامل ہو جاتا ہے۔",
+  },
+  "performances.manualAmount": { fr: "Montant (€)", ur: "رقم (€)" },
+  "performances.manualLabel": { fr: "Note (optionnel)", ur: "نوٹ (اختیاری)" },
+  "performances.manualAdd": { fr: "Ajouter", ur: "شامل کریں" },
+  "performances.manualAmountRequired": { fr: "Montant requis", ur: "رقم درکار ہے" },
+  "performances.manualError": { fr: "Erreur lors de l'ajout", ur: "شامل کرنے میں خرابی" },
 
   "conseils.title": { fr: "Conseils intelligents", ur: "ذہین مشورے" },
   "conseils.generate": { fr: "Générer un nouveau conseil", ur: "نیا مشورہ بنائیں" },

@@ -12,6 +12,7 @@ import ordersRoutes from "./modules/orders/routes.js";
 import reservationsRoutes from "./modules/reservations/routes.js";
 import printersRoutes from "./modules/printers/routes.js";
 import analyticsRoutes from "./modules/analytics/routes.js";
+import manualRevenueRoutes from "./modules/manual-revenue/routes.js";
 import aiInsightsRoutes from "./modules/ai-insights/routes.js";
 import aiChatRoutes from "./modules/ai-chat/routes.js";
 import wsRoute from "./ws/route.js";
@@ -36,6 +37,7 @@ async function main() {
   await fastify.register(reservationsRoutes);
   await fastify.register(printersRoutes);
   await fastify.register(analyticsRoutes);
+  await fastify.register(manualRevenueRoutes);
   await fastify.register(aiInsightsRoutes);
   await fastify.register(aiChatRoutes);
   await fastify.register(wsRoute);

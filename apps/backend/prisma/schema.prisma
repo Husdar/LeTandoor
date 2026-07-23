@@ -94,6 +94,11 @@ enum EmailIngestStatus {
   IGNORE
 }
 
+enum InsightKind {
+  MANUEL
+  QUOTIDIEN
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -104,8 +109,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  orders    Order[]
-  auditLogs AuditLog[]
+  orders               Order[]
+  auditLogs            AuditLog[]
+  manualRevenueEntries ManualRevenueEntry[]
 
   @@map("users")
 }
@@ -331,15 +337,31 @@ model AuditLog {
 }
 
 model AiInsight {
-  id           String   @id @default(cuid())
-  generatedAt  DateTime @default(now())
+  id           String      @id @default(cuid())
+  kind         InsightKind @default(MANUEL)
+  generatedAt  DateTime    @default(now())
   periodStart  DateTime
   periodEnd    DateTime
   content      String
   dataSnapshot Json
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
 
   @@map("ai_insights")
+}
+
+// Chiffre d'affaires encaissé en dehors de l'application (ex: terminal de carte bancaire physique
+// non relié) — saisi manuellement pour compléter le CA réel d'une journée dans les Performances.
+model ManualRevenueEntry {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  amount    Decimal  @db.Decimal(10, 2)
+  label     String?
+  createdBy String
+  creator   User     @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([date])
+  @@map("manual_revenue_entries")
 }
 
 model EmailIngestLog {

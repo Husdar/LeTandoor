@@ -139,6 +139,17 @@ export interface DashboardStats {
   discounts: number;
   dailySeries: { date: string; revenue: number; count: number }[];
   generatedAt: string;
+  manualRevenueToday: number;
+}
+
+export interface ManualRevenueEntry {
+  id: string;
+  date: string;
+  amount: string;
+  label?: string | null;
+  createdBy: string;
+  creator?: { name: string } | null;
+  createdAt: string;
 }
 
 export interface AiInsight {
