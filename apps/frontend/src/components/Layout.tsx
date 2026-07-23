@@ -8,16 +8,29 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import LanguageToggle from "./LanguageToggle";
 import AssistantWidget from "./AssistantWidget";
 import ChangePasswordModal from "./ChangePasswordModal";
+import {
+  IconOrders,
+  IconKitchen,
+  IconCashier,
+  IconFloorPlan,
+  IconReservations,
+  IconPerformance,
+  IconAdvice,
+  IconAdmin,
+  IconMenu,
+  IconClose,
+  LogoMark,
+} from "./icons";
 
-const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[] }[] = [
-  { to: "/commandes", labelKey: "nav.commandes", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR] },
-  { to: "/cuisine", labelKey: "nav.cuisine", roles: [Role.ADMIN, Role.MANAGER, Role.CUISINE] },
-  { to: "/caisse", labelKey: "nav.caisse", roles: [Role.ADMIN, Role.MANAGER, Role.CAISSE] },
-  { to: "/salle", labelKey: "nav.salle", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR] },
-  { to: "/reservations", labelKey: "nav.reservations", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR] },
-  { to: "/performances", labelKey: "nav.performances", roles: [Role.ADMIN, Role.MANAGER] },
-  { to: "/conseils", labelKey: "nav.conseils", roles: [Role.ADMIN, Role.MANAGER] },
-  { to: "/admin", labelKey: "nav.admin", roles: [Role.ADMIN] },
+const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[]; icon: typeof IconOrders }[] = [
+  { to: "/commandes", labelKey: "nav.commandes", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconOrders },
+  { to: "/cuisine", labelKey: "nav.cuisine", roles: [Role.ADMIN, Role.MANAGER, Role.CUISINE], icon: IconKitchen },
+  { to: "/caisse", labelKey: "nav.caisse", roles: [Role.ADMIN, Role.MANAGER, Role.CAISSE], icon: IconCashier },
+  { to: "/salle", labelKey: "nav.salle", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconFloorPlan },
+  { to: "/reservations", labelKey: "nav.reservations", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconReservations },
+  { to: "/performances", labelKey: "nav.performances", roles: [Role.ADMIN, Role.MANAGER], icon: IconPerformance },
+  { to: "/conseils", labelKey: "nav.conseils", roles: [Role.ADMIN, Role.MANAGER], icon: IconAdvice },
+  { to: "/admin", labelKey: "nav.admin", roles: [Role.ADMIN], icon: IconAdmin },
 ];
 
 export default function Layout() {
@@ -45,12 +58,16 @@ export default function Layout() {
   return (
     <div className="flex h-screen flex-col bg-cream">
       <header
-        className={clsx("flex items-center justify-between bg-burgundy px-4 py-3 text-cream shadow-lg sm:px-6", urdu && "flex-row-reverse")}
+        className={clsx(
+          "flex items-center justify-between bg-gradient-to-b from-burgundy-light to-burgundy px-4 py-3 text-cream sm:px-6",
+          urdu && "flex-row-reverse"
+        )}
         dir={urdu ? "rtl" : "ltr"}
-        style={{ boxShadow: "0 4px 16px -4px rgba(74, 13, 24, 0.35)" }}
+        style={{ boxShadow: "0 4px 20px -4px rgba(74, 13, 24, 0.45)" }}
       >
         <div className={clsx("flex min-w-0 items-center gap-2 sm:gap-3", urdu && "flex-row-reverse")}>
           <LanguageToggle />
+          <LogoMark className="hidden h-9 w-9 shrink-0 text-gold sm:block" />
           <span className="truncate font-display text-lg font-bold tracking-wide text-gold sm:text-2xl">Le Tandoor</span>
           <span className={clsx("hidden text-sm text-cream/70 sm:inline", urdu && "font-urdu text-base")}>
             {t("layout.subtitle")}
@@ -62,9 +79,14 @@ export default function Layout() {
           <button
             onClick={() => setChangingPassword(true)}
             title={t("changePassword.open")}
-            className="text-sm text-cream/90 underline-offset-2 hover:underline"
+            className={clsx("group flex items-center gap-2 text-sm text-cream/90", urdu && "flex-row-reverse")}
           >
-            {user?.name} <span className="text-gold">· {user?.role}</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold ring-1 ring-gold/40">
+              {user?.name?.trim().charAt(0).toUpperCase() ?? "?"}
+            </span>
+            <span className="underline-offset-2 group-hover:underline">
+              {user?.name} <span className="text-gold">· {user?.role}</span>
+            </span>
           </button>
           <button
             onClick={handleLogout}
@@ -77,9 +99,9 @@ export default function Layout() {
         <button
           onClick={() => setMobileMenuOpen((v) => !v)}
           aria-label={mobileMenuOpen ? t("layout.closeMenu") : t("layout.openMenu")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl text-gold transition hover:bg-cream/10 sm:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gold transition hover:bg-cream/10 sm:hidden"
         >
-          {mobileMenuOpen ? "✕" : "☰"}
+          {mobileMenuOpen ? <IconClose className="h-6 w-6" /> : <IconMenu className="h-6 w-6" />}
         </button>
       </header>
 
@@ -94,12 +116,13 @@ export default function Layout() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   clsx(
-                    "tap-target flex items-center rounded-xl px-4 text-base font-medium transition-colors",
+                    "tap-target flex items-center gap-3 rounded-xl px-4 text-base font-medium transition-colors",
                     urdu && "font-urdu text-lg",
                     isActive ? "bg-gold/15 text-burgundy" : "text-burgundy/60 hover:bg-cream"
                   )
                 }
               >
+                <item.icon className="h-5 w-5 shrink-0" />
                 {t(item.labelKey)}
               </NavLink>
             ))}
@@ -110,9 +133,14 @@ export default function Layout() {
                 setChangingPassword(true);
                 setMobileMenuOpen(false);
               }}
-              className="text-sm text-burgundy/70 underline-offset-2 hover:underline"
+              className="flex items-center gap-2 text-sm text-burgundy/70"
             >
-              {user?.name} · {user?.role}
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold-dark ring-1 ring-gold/30">
+                {user?.name?.trim().charAt(0).toUpperCase() ?? "?"}
+              </span>
+              <span className="underline-offset-2 hover:underline">
+                {user?.name} · {user?.role}
+              </span>
             </button>
           </div>
           <button onClick={handleLogout} className="btn-outline mt-3 w-full">
@@ -133,7 +161,7 @@ export default function Layout() {
             to={item.to}
             className={({ isActive }) =>
               clsx(
-                "flex shrink-0 items-center whitespace-nowrap border-b-[3px] px-4 py-3 text-sm font-medium transition-all duration-200",
+                "flex shrink-0 items-center gap-2 whitespace-nowrap border-b-[3px] px-4 py-3 text-sm font-medium transition-all duration-200",
                 urdu && "font-urdu text-base",
                 isActive
                   ? "border-gold text-burgundy"
@@ -141,6 +169,7 @@ export default function Layout() {
               )
             }
           >
+            <item.icon className="h-4 w-4 shrink-0" />
             {t(item.labelKey)}
           </NavLink>
         ))}

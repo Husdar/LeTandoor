@@ -4,6 +4,7 @@ import { OrderSource } from "@le-tandoor/shared";
 import { useActiveOrders } from "../../hooks/queries";
 import { formatMoney, formatTime, ORDER_STATUS_ACCENT, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "../../lib/format";
 import StatusBadge from "../../components/StatusBadge";
+import { IconBell, IconOrders } from "../../components/icons";
 import { usePendingWebOrders } from "../../store/pendingWebOrders";
 import type { Order } from "../../types";
 import NewOrderPanel from "./NewOrderPanel";
@@ -48,7 +49,9 @@ export default function CommandesPage() {
 
       {orders && orders.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-burgundy/15 py-16 text-center">
-          <span className="text-4xl">🍽️</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-burgundy/5 text-burgundy/30">
+            <IconOrders className="h-7 w-7" />
+          </span>
           <p className="mt-3 text-burgundy/50">Aucune commande active pour le moment.</p>
         </div>
       )}
@@ -75,8 +78,9 @@ export default function CommandesPage() {
                   </p>
                   <p className="text-xs text-burgundy/50">{formatTime(order.createdAt)}</p>
                   {order.source === OrderSource.SITE_WEB && (
-                    <span className="mt-1 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-semibold text-gold-dark">
-                      {pendingWebOrderIds.has(order.id) ? "🔔 Site web" : "Site web"}
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-semibold text-gold-dark">
+                      {pendingWebOrderIds.has(order.id) && <IconBell className="h-3 w-3" />}
+                      Site web
                     </span>
                   )}
                 </div>
