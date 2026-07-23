@@ -1,0 +1,359 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SERVEUR
+  CUISINE
+  CAISSE
+}
+
+enum OrderType {
+  SUR_PLACE
+  EMPORTER
+  LIVRAISON
+}
+
+enum OrderStatus {
+  NOUVELLE
+  EN_PREPARATION
+  PRETE
+  SERVIE
+  TERMINEE
+  ANNULEE
+}
+
+enum OrderItemStatus {
+  NOUVELLE
+  EN_PREPARATION
+  PRETE
+  SERVIE
+  ANNULE
+}
+
+enum TableStatus {
+  LIBRE
+  RESERVEE
+  OCCUPEE
+  A_NETTOYER
+}
+
+enum TableShape {
+  RONDE
+  CARREE
+  RECTANGLE
+}
+
+enum ReservationStatus {
+  EN_ATTENTE
+  CONFIRMEE
+  ARRIVEE
+  ANNULEE
+  ABSENTE
+}
+
+enum PaymentMethod {
+  ESPECES
+  CARTE
+  TICKET_RESTAURANT
+  AUTRE
+}
+
+enum PrintTarget {
+  CUISINE
+  CAISSE
+  BAR
+}
+
+enum PrintTicketType {
+  CUISINE
+  RECU
+}
+
+enum PrintJobStatus {
+  EN_ATTENTE
+  IMPRIME
+  ECHEC
+}
+
+enum OrderSource {
+  MANUEL
+  SITE_WEB
+}
+
+enum EmailIngestStatus {
+  TRAITE
+  ECHEC
+  IGNORE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders    Order[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model MenuCategory {
+  id        String     @id @default(cuid())
+  name      String
+  position  Int        @default(0)
+  createdAt DateTime   @default(now())
+  items     MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  cost        Decimal? @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options    MenuItemOption[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@map("menu_items")
+}
+
+model MenuItemOption {
+  id         String   @id @default(cuid())
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  name       String
+  priceDelta Decimal  @default(0) @db.Decimal(10, 2)
+  /// Nom de l'étape (ex: "Entrée", "Plat", "Dessert") pour les menus à prix fixe :
+  /// les options qui partagent le même groupName forment un choix à sélection unique.
+  /// null = supplément libre (sélection multiple, comme avant).
+  groupName  String?
+
+  @@index([menuItemId])
+  @@map("menu_item_options")
+}
+
+model RestaurantTable {
+  id        String      @id @default(cuid())
+  name      String
+  seats     Int
+  posX      Float       @default(0)
+  posY      Float       @default(0)
+  shape     TableShape  @default(CARREE)
+  zone      String?
+  status    TableStatus @default(LIBRE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  reservations Reservation[]
+  orderTables  OrderTable[]
+
+  @@map("restaurant_tables")
+}
+
+model Reservation {
+  id            String            @id @default(cuid())
+  customerName  String
+  customerPhone String?
+  partySize     Int?
+  dateTime      DateTime
+  notes         String?
+  status        ReservationStatus @default(CONFIRMEE)
+  tableId       String?
+  table         RestaurantTable?  @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([dateTime])
+  @@index([tableId])
+  @@map("reservations")
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  orderNumber      Int         @unique @default(autoincrement())
+  type             OrderType
+  status           OrderStatus @default(NOUVELLE)
+  source           OrderSource @default(MANUEL)
+  externalRef      String?     @unique
+  serverId         String?
+  server           User?       @relation(fields: [serverId], references: [id], onDelete: SetNull)
+  customerName     String?
+  customerPhone    String?
+  deliveryAddress  String?
+  /// Heure de retrait/livraison demandée par le client (ex: commande site web avec créneau choisi).
+  requestedFor     DateTime?
+  /// Délai de préparation minimum indiqué par le site (en minutes), à titre informatif.
+  prepMinutes      Int?
+  subtotal         Decimal     @default(0) @db.Decimal(10, 2)
+  deliveryFee      Decimal     @default(0) @db.Decimal(10, 2)
+  discountAmount   Decimal     @default(0) @db.Decimal(10, 2)
+  discountReason   String?
+  total            Decimal     @default(0) @db.Decimal(10, 2)
+  cancelReason     String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  closedAt         DateTime?
+
+  items          OrderItem[]
+  payments       Payment[]
+  printJobs      PrintJob[]
+  orderTables    OrderTable[]
+  emailIngestLog EmailIngestLog?
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderTable {
+  id      String          @id @default(cuid())
+  orderId String
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  tableId String
+  table   RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, tableId])
+  @@index([tableId])
+  @@map("order_tables")
+}
+
+model OrderItem {
+  id               String          @id @default(cuid())
+  orderId          String
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId       String?
+  menuItem         MenuItem?       @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  nameSnapshot     String
+  unitPriceSnapshot Decimal        @db.Decimal(10, 2)
+  quantity         Int
+  notes            String?
+  status           OrderItemStatus @default(NOUVELLE)
+  cancelReason     String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  options OrderItemOption[]
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderItemOption {
+  id             String    @id @default(cuid())
+  orderItemId    String
+  orderItem      OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  name           String
+  priceDelta     Decimal   @default(0) @db.Decimal(10, 2)
+
+  @@index([orderItemId])
+  @@map("order_item_options")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  orderId   String
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  createdAt DateTime      @default(now())
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+model Printer {
+  id        String      @id @default(cuid())
+  name      String
+  ip        String
+  port      Int         @default(9100)
+  target    PrintTarget
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  printJobs PrintJob[]
+
+  @@map("printers")
+}
+
+model PrintJob {
+  id           String          @id @default(cuid())
+  orderId      String
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  printerId    String
+  printer      Printer         @relation(fields: [printerId], references: [id], onDelete: Restrict)
+  ticketType   PrintTicketType
+  status       PrintJobStatus  @default(EN_ATTENTE)
+  reprintCount Int             @default(0)
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+  printedAt    DateTime?
+
+  @@index([orderId])
+  @@index([status])
+  @@map("print_jobs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AiInsight {
+  id           String   @id @default(cuid())
+  generatedAt  DateTime @default(now())
+  periodStart  DateTime
+  periodEnd    DateTime
+  content      String
+  dataSnapshot Json
+  createdAt    DateTime @default(now())
+
+  @@map("ai_insights")
+}
+
+model EmailIngestLog {
+  id           String            @id @default(cuid())
+  messageId    String            @unique
+  subject      String
+  receivedAt   DateTime
+  status       EmailIngestStatus
+  errorMessage String?
+  rawText      String
+  orderId      String?           @unique
+  order        Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt    DateTime          @default(now())
+
+  @@index([status])
+  @@map("email_ingest_logs")
+}

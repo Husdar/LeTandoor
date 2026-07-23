@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tandoor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tandoor}
+      POSTGRES_DB: tandoor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tandoor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ..
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://tandoor:${POSTGRES_PASSWORD:-tandoor}@postgres:5432/tandoor
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET requis}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-anthropic/claude-sonnet-5}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@le-tandoor.fr}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?SEED_ADMIN_PASSWORD requis}
+      IMAP_HOST: ${IMAP_HOST:-imap.mail.me.com}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_USER: ${IMAP_USER:-}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:-}
+      ORDER_EMAIL_SENDER: ${ORDER_EMAIL_SENDER:-noreply@account.hostinger.com,noreply@store.hostinger.com}
+      ORDER_EMAIL_SUBJECT_PATTERN: ${ORDER_EMAIL_SUBJECT_PATTERN:-commande}
+    # Pas de port publié : le frontend (nginx) est le seul point d'entrée, il proxifie /api et /ws
+    # vers ce service via le réseau interne Docker Compose (nom de service = hôte "backend").
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: apps/frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:
