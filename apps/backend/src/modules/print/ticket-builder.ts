@@ -1,6 +1,15 @@
 import { printer as ThermalPrinter, types as PrinterTypes, characterSet as CharacterSet } from "node-thermal-printer";
 import { OrderItemStatus, OrderSource, OrderType, PaymentMethod } from "@le-tandoor/shared";
+import { RESTAURANT_TIMEZONE } from "../../timezone.js";
 import type { OrderWithRelations } from "../orders/order-include.js";
+
+function formatDateTime(date: Date): string {
+  return date.toLocaleString("fr-FR", { timeZone: RESTAURANT_TIMEZONE });
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("fr-FR", { timeZone: RESTAURANT_TIMEZONE, hour: "2-digit", minute: "2-digit" });
+}
 
 const ORDER_TYPE_LABELS: Record<string, string> = {
   SUR_PLACE: "Sur place",
@@ -60,9 +69,10 @@ function writeOrderContext(printer: ThermalPrinter, order: OrderWithRelations) {
   if (order.requestedFor) {
     const label = order.type === OrderType.LIVRAISON ? "Livraison souhaitee" : "Retrait souhaite";
     printer.bold(true);
-    printer.println(
-      `${label}: ${new Date(order.requestedFor).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
-    );
+    printer.setTextQuadArea();
+    printer.println(`${label}:`);
+    printer.println(formatTime(new Date(order.requestedFor)));
+    printer.setTextNormal();
     printer.bold(false);
   }
 }
@@ -99,14 +109,14 @@ export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRela
   printer.setTextDoubleHeight();
   printer.println(`Commande #${order.orderNumber}`);
   printer.setTextNormal();
-  printer.println(new Date(order.createdAt).toLocaleString("fr-FR"));
+  printer.println(formatDateTime(new Date(order.createdAt)));
   writeOrderContext(printer, order);
   printer.drawLine();
 
   for (const item of order.items) {
     if (item.status === OrderItemStatus.ANNULE) continue;
     printer.bold(true);
-    printer.setTextDoubleHeight();
+    printer.setTextQuadArea();
     printer.println(`${item.quantity}x ${item.nameSnapshot}`);
     printer.setTextNormal();
     printer.bold(false);
@@ -135,7 +145,7 @@ export function writeReceipt(printer: ThermalPrinter, order: OrderWithRelations)
 
   printer.alignLeft();
   printer.println(`Commande #${order.orderNumber}`);
-  printer.println(new Date(order.createdAt).toLocaleString("fr-FR"));
+  printer.println(formatDateTime(new Date(order.createdAt)));
   writeOrderContext(printer, order);
   printer.drawLine();
 
