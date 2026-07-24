@@ -82,8 +82,12 @@ body {
     font-weight: 700;
     line-height: 2;
   }
+  /* items-start (pas items-center) + overflow-y-auto : sur Safari iOS, un flex container centré
+     avec align-items:center empêche de scroller vers le contenu qui dépasse en haut — le bouton
+     le plus bas d'une fenêtre modale trop grande pour l'écran devenait inaccessible. Les fenêtres
+     qui veulent un autre alignement (ex: feuille du bas sur mobile) le fixent elles-mêmes. */
   .modal-overlay {
-    @apply fixed inset-0 z-40 flex items-center justify-center bg-burgundy-dark/50 p-4 backdrop-blur-[2px];
+    @apply fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-burgundy-dark/50 p-4 backdrop-blur-[2px];
     animation: fade-in 0.15s ease-out;
   }
   .modal-panel {

@@ -109,7 +109,7 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
 
   return (
     <div className="modal-overlay">
-      <div className="modal-panel flex max-h-[90vh] w-full max-w-2xl flex-col rounded-3xl bg-white shadow-xl">
+      <div className="modal-panel flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-3xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-burgundy/10 px-6 py-4">
           <div>
             <h2 className="font-display text-xl font-semibold text-burgundy">
