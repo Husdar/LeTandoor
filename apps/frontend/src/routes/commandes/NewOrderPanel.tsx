@@ -18,6 +18,7 @@ export default function NewOrderPanel({ onClose }: { onClose: () => void }) {
 
   const [type, setType] = useState<CreateOrderInput["type"]>(OrderType.SUR_PLACE);
   const [tableId, setTableId] = useState<string | undefined>(undefined);
+  const [tablePickerOpen, setTablePickerOpen] = useState(true);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -140,20 +141,39 @@ export default function NewOrderPanel({ onClose }: { onClose: () => void }) {
 
           {type === OrderType.SUR_PLACE && (
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-burgundy/80">Table</p>
-              <div className="flex flex-wrap gap-2">
-                {tables?.map((t) => (
+              {tableId && !tablePickerOpen ? (
+                <div className="flex items-center justify-between rounded-xl border-2 border-gold bg-gold/20 px-4 py-2.5">
+                  <p className="text-sm font-medium text-burgundy">
+                    Table : {tables?.find((t) => t.id === tableId)?.name}
+                  </p>
                   <button
-                    key={t.id}
-                    onClick={() => setTableId(t.id)}
-                    className={`tap-target rounded-xl border-2 px-4 py-2 text-sm font-medium ${
-                      tableId === t.id ? "border-gold bg-gold/20 text-burgundy" : "border-burgundy/15 text-burgundy/70"
-                    }`}
+                    className="text-sm font-medium text-burgundy underline"
+                    onClick={() => setTablePickerOpen(true)}
                   >
-                    {t.name} ({t.seats} pl.)
+                    Changer
                   </button>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-2 text-sm font-medium text-burgundy/80">Table</p>
+                  <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+                    {tables?.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setTableId(t.id);
+                          setTablePickerOpen(false);
+                        }}
+                        className={`tap-target rounded-xl border-2 px-2 py-2 text-sm font-medium sm:px-4 ${
+                          tableId === t.id ? "border-gold bg-gold/20 text-burgundy" : "border-burgundy/15 text-burgundy/70"
+                        }`}
+                      >
+                        {t.name} ({t.seats} pl.)
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -263,6 +283,21 @@ export default function NewOrderPanel({ onClose }: { onClose: () => void }) {
           </div>
         </aside>
       </div>
+
+      {cart.length > 0 && (
+        <div className="shrink-0 border-t border-burgundy/10 bg-white p-3 sm:hidden">
+          {error && <p className="mb-2 text-sm font-medium text-red-700">{error}</p>}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-burgundy/70">
+              {cart.reduce((n, l) => n + l.quantity, 0)} article{cart.length > 1 ? "s" : ""} ·{" "}
+              <span className="font-semibold text-burgundy">{formatMoney(total)}</span>
+            </span>
+            <button className="btn-primary" disabled={createOrder.isPending} onClick={handleSubmit}>
+              {createOrder.isPending ? "Envoi…" : "Envoyer en cuisine"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {pickingItem && (
         <ItemOptionsModal

@@ -226,28 +226,30 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
             <span>{formatMoney(order.total)}</span>
           </div>
           {error && <p className="mb-2 text-sm font-medium text-red-700">{error}</p>}
-          <div className="flex gap-3">
-            <button className="btn-outline flex-1" onClick={onClose}>
-              Fermer
-            </button>
-            {!closed && (
-              <>
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <button className="btn-outline sm:flex-1" onClick={onClose}>
+                Fermer
+              </button>
+              {!closed && (
                 <button
-                  className="btn-outline flex-1"
+                  className="btn-outline sm:flex-1"
                   disabled={reprintTicket.isPending}
                   onClick={() => reprintTicket.mutate()}
                 >
                   {reprintTicket.isPending ? "Impression…" : "Réimprimer ticket"}
                 </button>
-                {order.status !== OrderStatus.SERVIE && (
-                  <button className="btn-gold flex-1" onClick={() => markOrderServed.mutate()}>
-                    Marquer servie
-                  </button>
-                )}
-                <button className="btn-danger flex-1" onClick={handleCancelOrder}>
-                  Annuler la commande
-                </button>
-              </>
+              )}
+            </div>
+            {!closed && order.status !== OrderStatus.SERVIE && (
+              <button className="btn-gold sm:flex-1" onClick={() => markOrderServed.mutate()}>
+                Marquer servie
+              </button>
+            )}
+            {!closed && (
+              <button className="btn-danger sm:flex-1" onClick={handleCancelOrder}>
+                Annuler la commande
+              </button>
             )}
           </div>
         </footer>
