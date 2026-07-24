@@ -43,6 +43,34 @@ function formatMoney(value: unknown): string {
   return `${Number(value).toFixed(2)} EUR`;
 }
 
+type OrderItemWithRelations = OrderWithRelations["items"][number];
+
+interface CategoryGroup {
+  categoryName: string;
+  position: number;
+  items: OrderItemWithRelations[];
+}
+
+/** Regroupe les articles par catégorie de menu (entrées, plats...) pour un ticket plus lisible ;
+ * les articles sans catégorie connue (ex: article non reconnu d'une commande site web) finissent
+ * dans un groupe "Autres" en fin de ticket plutôt que d'être mélangés. */
+function groupItemsByCategory(items: OrderItemWithRelations[]): CategoryGroup[] {
+  const groups = new Map<string, CategoryGroup>();
+  for (const item of items) {
+    const category = item.menuItem?.category;
+    const key = category?.id ?? "__autres__";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        categoryName: category?.name ?? "Autres",
+        position: category?.position ?? Number.MAX_SAFE_INTEGER,
+        items: [],
+      });
+    }
+    groups.get(key)!.items.push(item);
+  }
+  return Array.from(groups.values()).sort((a, b) => a.position - b.position);
+}
+
 /** Type, table ou coordonnées client selon le canal — essentiel pour l'emporter/la livraison. */
 function writeOrderContext(printer: ThermalPrinter, order: OrderWithRelations) {
   const tableLabel = order.orderTables[0]?.table?.name;
@@ -113,18 +141,23 @@ export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRela
   writeOrderContext(printer, order);
   printer.drawLine();
 
-  for (const item of order.items) {
-    if (item.status === OrderItemStatus.ANNULE) continue;
+  const groups = groupItemsByCategory(order.items.filter((item) => item.status !== OrderItemStatus.ANNULE));
+  for (const group of groups) {
     printer.bold(true);
-    printer.setTextQuadArea();
-    printer.println(`${item.quantity}x ${item.nameSnapshot}`);
-    printer.setTextNormal();
+    printer.println(`- ${group.categoryName.toUpperCase()} -`);
     printer.bold(false);
-    for (const opt of item.options) {
-      printer.println(`   + ${opt.name}`);
-    }
-    if (item.notes) {
-      printer.println(`   Note: ${item.notes}`);
+    for (const item of group.items) {
+      printer.bold(true);
+      printer.setTextQuadArea();
+      printer.println(`${item.quantity}x ${item.nameSnapshot}`);
+      printer.setTextNormal();
+      printer.bold(false);
+      for (const opt of item.options) {
+        printer.println(`   + ${opt.name}`);
+      }
+      if (item.notes) {
+        printer.println(`   Note: ${item.notes}`);
+      }
     }
   }
 
@@ -149,15 +182,22 @@ export function writeReceipt(printer: ThermalPrinter, order: OrderWithRelations)
   writeOrderContext(printer, order);
   printer.drawLine();
 
-  for (const item of order.items) {
-    if (item.status === OrderItemStatus.ANNULE) continue;
-    const lineTotal = Number(item.unitPriceSnapshot) * item.quantity;
-    printer.leftRight(`${item.quantity}x ${item.nameSnapshot}`, formatMoney(lineTotal));
-    for (const opt of item.options) {
-      if (Number(opt.priceDelta) !== 0) {
-        printer.leftRight(`  + ${opt.name}`, formatMoney(opt.priceDelta));
-      } else {
-        printer.println(`  + ${opt.name}`);
+  const receiptGroups = groupItemsByCategory(order.items.filter((item) => item.status !== OrderItemStatus.ANNULE));
+  for (const group of receiptGroups) {
+    printer.bold(true);
+    printer.println(`- ${group.categoryName.toUpperCase()} -`);
+    printer.bold(false);
+    for (const item of group.items) {
+      const lineTotal = Number(item.unitPriceSnapshot) * item.quantity;
+      printer.bold(true);
+      printer.leftRight(`${item.quantity}x ${item.nameSnapshot}`, formatMoney(lineTotal));
+      printer.bold(false);
+      for (const opt of item.options) {
+        if (Number(opt.priceDelta) !== 0) {
+          printer.leftRight(`  + ${opt.name}`, formatMoney(opt.priceDelta));
+        } else {
+          printer.println(`  + ${opt.name}`);
+        }
       }
     }
   }
