@@ -3,7 +3,31 @@ import { useQueryClient } from "@tanstack/react-query";
 import { WsEvent, OrderSource, OrderStatus, type WsMessage } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
 import { usePendingWebOrders } from "../store/pendingWebOrders";
+import { useActiveOrders } from "../hooks/queries";
 import type { Order } from "../types";
+
+/**
+ * Filet de sécurité contre la sonnerie fantôme : si un événement ORDER_UPDATED/ORDER_CLOSED est
+ * manqué (veille de l'ordinateur, coupure réseau au moment précis de la diffusion), la commande
+ * reste marquée "en attente" indéfiniment côté client, sans qu'aucun futur message ne la corrige.
+ * On revérifie donc périodiquement (via le polling déjà en place de useActiveOrders) que chaque
+ * commande encore sonnante est réellement toujours au statut NOUVELLE.
+ */
+export function useRingReconciliation() {
+  const { data: orders } = useActiveOrders();
+
+  useEffect(() => {
+    if (!orders) return;
+    const pendingIds = usePendingWebOrders.getState().ids;
+    if (pendingIds.size === 0) return;
+    for (const id of pendingIds) {
+      const order = orders.find((o) => o.id === id);
+      if (!order || order.status !== OrderStatus.NOUVELLE) {
+        usePendingWebOrders.getState().acknowledge(id);
+      }
+    }
+  }, [orders]);
+}
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient();

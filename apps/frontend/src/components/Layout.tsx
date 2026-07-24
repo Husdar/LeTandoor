@@ -5,6 +5,7 @@ import { Role } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
 import { api } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
+import { useRingReconciliation } from "../lib/ws";
 import LanguageToggle from "./LanguageToggle";
 import AssistantWidget from "./AssistantWidget";
 import ChangePasswordModal from "./ChangePasswordModal";
@@ -43,6 +44,8 @@ export default function Layout() {
   const { t, lang } = useT();
   const [changingPassword, setChangingPassword] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useRingReconciliation();
 
   const visibleItems = NAV_ITEMS.filter((item) => user && item.roles.includes(user.role));
   const urdu = lang === "ur";
