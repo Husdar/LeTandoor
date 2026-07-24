@@ -182,13 +182,16 @@ export default function PrinterSetupWizard({ onClose }: { onClose: () => void })
 
             {formError && <p className="text-sm font-medium text-red-700">{formError}</p>}
 
-            <div className="flex items-center justify-between pt-1">
-              <button className="btn-outline" onClick={() => setStep(1)}>
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+              <button className="btn-outline order-2 sm:order-1" onClick={() => setStep(1)}>
                 {t("printerWizard.back")}
               </button>
-              <div className="flex items-center gap-3">
+              <div className="order-1 flex flex-col items-stretch gap-3 sm:order-2 sm:flex-row sm:items-center">
                 {testStatus !== "success" && (
-                  <button className="text-sm text-burgundy/50 underline hover:text-burgundy" onClick={handleSave}>
+                  <button
+                    className="text-sm text-burgundy/50 underline hover:text-burgundy"
+                    onClick={handleSave}
+                  >
                     {t("printerWizard.saveAnyway")}
                   </button>
                 )}

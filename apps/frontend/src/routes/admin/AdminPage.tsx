@@ -23,12 +23,16 @@ export default function AdminPage() {
       <h1 className={clsx("mb-4 font-display text-2xl font-semibold text-burgundy", urdu && "font-urdu")}>
         {t("admin.title")}
       </h1>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((tItem) => (
           <button
             key={tItem.key}
             onClick={() => setTab(tItem.key)}
-            className={clsx(tab === tItem.key ? "btn-primary" : "btn-outline", urdu && "font-urdu text-base")}
+            className={clsx(
+              "shrink-0 whitespace-nowrap",
+              tab === tItem.key ? "btn-primary" : "btn-outline",
+              urdu && "font-urdu text-base"
+            )}
           >
             {t(tItem.labelKey)}
           </button>
