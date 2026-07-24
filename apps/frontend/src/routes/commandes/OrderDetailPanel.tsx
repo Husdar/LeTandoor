@@ -68,7 +68,15 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
   });
 
   const reprintTicket = useMutation({
-    mutationFn: () => api.post(`/orders/${order.id}/print/CUISINE`),
+    mutationFn: () => api.post<{ status: string; errorMessage?: string | null }[]>(`/orders/${order.id}/print/CUISINE`),
+    onSuccess: (jobs) => {
+      if (jobs.length === 0) {
+        setError("Aucune imprimante configurée pour les tickets cuisine (vérifiez Administration → Imprimantes).");
+        return;
+      }
+      const failed = jobs.find((j) => j.status === "ECHEC");
+      setError(failed ? failed.errorMessage ?? "Échec d'impression" : null);
+    },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Erreur d'impression"),
   });
 
