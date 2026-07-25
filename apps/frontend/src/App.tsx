@@ -16,7 +16,7 @@ import SallePage from "./routes/salle/SallePage";
 import ReservationsPage from "./routes/reservations/ReservationsPage";
 import PerformancesPage from "./routes/performances/PerformancesPage";
 import ConseilsPage from "./routes/conseils/ConseilsPage";
-import MarketingPage from "./routes/marketing/MarketingPage";
+import ClientsPage from "./routes/clients/ClientsPage";
 import AdminPage from "./routes/admin/AdminPage";
 
 export default function App() {
@@ -105,10 +105,10 @@ export default function App() {
             }
           />
           <Route
-            path="/marketing"
+            path="/clients"
             element={
               <RequireRole roles={[Role.ADMIN, Role.MANAGER]}>
-                <MarketingPage />
+                <ClientsPage />
               </RequireRole>
             }
           />
@@ -120,6 +120,9 @@ export default function App() {
               </RequireRole>
             }
           />
+          {/* Toute URL inconnue (ex: un ancien lien /marketing supprimé) renvoie vers l'accueil
+              plutôt que d'afficher une page blanche. */}
+          <Route path="*" element={<Navigate to="/commandes" replace />} />
         </Route>
       </Route>
     </Routes>

@@ -8,8 +8,7 @@ import type {
   DashboardStats,
   AiInsight,
   ManualRevenueEntry,
-  MarketingContact,
-  MarketingCampaign,
+  CustomerProfile,
 } from "../types";
 
 export function useMenu() {
@@ -62,16 +61,9 @@ export function useManualRevenue(from: string, to: string) {
   });
 }
 
-export function useMarketingContacts() {
+export function useCustomers() {
   return useQuery({
-    queryKey: ["marketing-contacts"],
-    queryFn: () => api.get<MarketingContact[]>("/marketing/contacts"),
-  });
-}
-
-export function useMarketingCampaigns() {
-  return useQuery({
-    queryKey: ["marketing-campaigns"],
-    queryFn: () => api.get<MarketingCampaign[]>("/marketing/campaigns"),
+    queryKey: ["customers"],
+    queryFn: () => api.get<CustomerProfile[]>("/customers"),
   });
 }

@@ -15,10 +15,11 @@ import analyticsRoutes from "./modules/analytics/routes.js";
 import manualRevenueRoutes from "./modules/manual-revenue/routes.js";
 import aiInsightsRoutes from "./modules/ai-insights/routes.js";
 import aiChatRoutes from "./modules/ai-chat/routes.js";
-import marketingRoutes from "./modules/marketing/routes.js";
+import customersRoutes from "./modules/customers/routes.js";
 import wsRoute from "./ws/route.js";
 import { startEmailOrderListener } from "./modules/email-orders/imap-listener.js";
 import { startDailyInsightScheduler } from "./modules/ai-insights/scheduler.js";
+import { startReviewEmailScheduler } from "./modules/orders/review-email.js";
 
 async function main() {
   const fastify = Fastify({ logger: true });
@@ -42,7 +43,7 @@ async function main() {
   await fastify.register(manualRevenueRoutes);
   await fastify.register(aiInsightsRoutes);
   await fastify.register(aiChatRoutes);
-  await fastify.register(marketingRoutes);
+  await fastify.register(customersRoutes);
   await fastify.register(wsRoute);
 
   fastify.get("/api/health", async () => ({ status: "ok" }));
@@ -51,6 +52,7 @@ async function main() {
 
   startEmailOrderListener().catch((err) => fastify.log.error(err, "Échec du démarrage de l'écoute IMAP"));
   startDailyInsightScheduler(fastify.log);
+  startReviewEmailScheduler(fastify.log);
 }
 
 main().catch((err) => {

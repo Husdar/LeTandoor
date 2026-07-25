@@ -3,9 +3,10 @@ import { startRinging, stopRinging } from "../lib/sound";
 
 interface PendingWebOrdersState {
   ids: Set<string>;
-  /** Signale une nouvelle commande site web non encore ouverte — déclenche/maintient la sonnerie. */
+  /** Signale une nouvelle commande (toute source) non encore ouverte/acceptée — déclenche/maintient
+   * la sonnerie et le popup plein écran d'acceptation. */
   add: (id: string) => void;
-  /** Marque une commande comme ouverte — coupe la sonnerie s'il n'en reste plus aucune en attente. */
+  /** Marque une commande comme ouverte/acceptée — coupe la sonnerie s'il n'en reste plus aucune en attente. */
   acknowledge: (id: string) => void;
 }
 

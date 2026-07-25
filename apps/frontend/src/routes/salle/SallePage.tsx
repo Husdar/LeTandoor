@@ -66,7 +66,7 @@ export default function SallePage() {
 
   return (
     <div className="p-6">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <h1 className={clsx("font-display text-2xl font-semibold text-burgundy", urdu && "font-urdu")}>
           {t("salle.title")}
         </h1>

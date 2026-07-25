@@ -43,4 +43,8 @@ export const env = {
   // étant hébergé à distance, il ne peut pas atteindre directement les imprimantes du réseau
   // local du restaurant ; le relais tourne sur place et transmet les tickets en TCP.
   printRelayToken: process.env.PRINT_RELAY_TOKEN,
+  // Lien "Avis" Google Maps du restaurant, envoyé au client 30 min après la clôture de sa commande.
+  googleReviewUrl:
+    process.env.GOOGLE_REVIEW_URL ??
+    "https://www.google.com/maps/place/Le+Tandoor+%7C+Restaurant+Indien+Lorient+%7C+-20%25+%C3%80+EMPORTER/@47.7582783,-3.3784699,642m/data=!3m1!1e3!4m8!3m7!1s0x48105f0164f6ad03:0xae0cb9ac1f97d66e!8m2!3d47.7582747!4d-3.375895!9m1!1b1!16s%2Fg%2F1tgclpw5?entry=ttu",
 };

@@ -340,7 +340,6 @@ export async function closeOrder(orderId: string, input: CloseOrderInput, userId
   for (const ot of updated.orderTables) {
     broadcast(WsEvent.TABLE_UPDATED, ot.table);
   }
-  printOrder(updated.id, PrintTicketType.RECU).catch((err) => console.error("[print] échec impression reçu", err));
   return updated;
 }
 

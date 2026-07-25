@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { WsEvent, OrderSource, OrderStatus, type WsMessage } from "@le-tandoor/shared";
+import { WsEvent, OrderStatus, type WsMessage } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
 import { usePendingWebOrders } from "../store/pendingWebOrders";
 import { useActiveOrders } from "../hooks/queries";
@@ -54,8 +54,10 @@ export function useRealtimeSync() {
         switch (message.event) {
           case WsEvent.ORDER_CREATED: {
             queryClient.invalidateQueries({ queryKey: ["orders"] });
+            // Sonnerie + popup plein écran d'acceptation pour TOUTE nouvelle commande (pas
+            // seulement site web) : peu importe qui/comment elle a été créée, elle doit être vue.
             const order = message.payload as Order | undefined;
-            if (order?.source === OrderSource.SITE_WEB) {
+            if (order) {
               usePendingWebOrders.getState().add(order.id);
             }
             break;

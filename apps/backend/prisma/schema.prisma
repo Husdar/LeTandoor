@@ -259,6 +259,9 @@ model Order {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   closedAt         DateTime?
+  /// Empêche un double envoi de l'email "donnez votre avis" (le planificateur tourne toutes les
+  /// quelques minutes et repasse sur les mêmes commandes tant qu'elles ne sont pas marquées).
+  reviewEmailSentAt DateTime?
 
   items          OrderItem[]
   payments       Payment[]

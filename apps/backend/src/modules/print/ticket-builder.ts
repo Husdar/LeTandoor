@@ -11,6 +11,18 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString("fr-FR", { timeZone: RESTAURANT_TIMEZONE, hour: "2-digit", minute: "2-digit" });
 }
 
+/** Numéro affiché : celui du site web (externalRef) s'il existe, sinon le numéro interne — pour
+ * qu'une commande site web porte le même numéro sur le ticket que celui vu par le client. */
+function ref(order: OrderWithRelations): string {
+  return order.externalRef ?? String(order.orderNumber);
+}
+
+/** Retire un suffixe descriptif entre parenthèses en fin de nom (ex: "Butter Chicken (spécialité
+ * du chef)" -> "Butter Chicken") pour un ticket cuisine plus court et plus lisible en un coup d'œil. */
+function shortenName(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+
 const ORDER_TYPE_LABELS: Record<string, string> = {
   SUR_PLACE: "Sur place",
   EMPORTER: "A emporter",
@@ -123,22 +135,40 @@ export function writeTestTicket(printer: ThermalPrinter) {
   printer.cut();
 }
 
+/** Ticket cuisine volontairement minimal : juste le numéro, le contexte (type/table/horaire) et
+ * les plats — pas de branding ni de coordonnées client, pour aller droit au but en cuisine. */
 export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRelations) {
+  const tableLabel = order.orderTables[0]?.table?.name;
+
   printer.alignCenter();
   printer.setTextDoubleHeight();
   printer.bold(true);
-  printer.println("LE TANDOOR");
+  printer.println(`Commande #${ref(order)}`);
   printer.bold(false);
   printer.setTextNormal();
-  printer.println("TICKET CUISINE");
-  printer.drawLine();
+
+  printer.bold(true);
+  printer.println(`${ORDER_TYPE_LABELS[order.type] ?? order.type}${tableLabel ? " - " + tableLabel : ""}`);
+  printer.bold(false);
+
+  if (order.requestedFor) {
+    const label = order.type === OrderType.LIVRAISON ? "Livraison" : "Retrait";
+    printer.bold(true);
+    printer.setTextDoubleHeight();
+    printer.println(`${label} a:`);
+    printer.setTextQuadArea();
+    printer.println(formatTime(new Date(order.requestedFor)));
+    printer.setTextNormal();
+    printer.bold(false);
+  } else {
+    printer.bold(true);
+    printer.setTextQuadArea();
+    printer.println(formatTime(new Date(order.createdAt)));
+    printer.setTextNormal();
+    printer.bold(false);
+  }
 
   printer.alignLeft();
-  printer.setTextDoubleHeight();
-  printer.println(`Commande #${order.orderNumber}`);
-  printer.setTextNormal();
-  printer.println(formatDateTime(new Date(order.createdAt)));
-  writeOrderContext(printer, order);
   printer.drawLine();
 
   const groups = groupItemsByCategory(order.items.filter((item) => item.status !== OrderItemStatus.ANNULE));
@@ -149,7 +179,7 @@ export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRela
     for (const item of group.items) {
       printer.bold(true);
       printer.setTextQuadArea();
-      printer.println(`${item.quantity}x ${item.nameSnapshot}`);
+      printer.println(`${item.quantity}x ${shortenName(item.nameSnapshot)}`);
       printer.setTextNormal();
       printer.bold(false);
       for (const opt of item.options) {
@@ -177,7 +207,7 @@ export function writeReceipt(printer: ThermalPrinter, order: OrderWithRelations)
   printer.drawLine();
 
   printer.alignLeft();
-  printer.println(`Commande #${order.orderNumber}`);
+  printer.println(`Commande #${ref(order)}`);
   printer.println(formatDateTime(new Date(order.createdAt)));
   writeOrderContext(printer, order);
   printer.drawLine();

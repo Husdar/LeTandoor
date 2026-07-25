@@ -43,7 +43,13 @@ export default function CaissePage() {
                     {urdu ? t(`orderType.${order.type}` as TranslationKey) : ORDER_TYPE_LABELS[order.type]}
                     {tableLabel ? ` — ${tableLabel}` : ""}
                   </p>
-                  <p className="text-xs text-burgundy/50">{formatTime(order.createdAt)}</p>
+                  {order.requestedFor ? (
+                    <p className="text-xs font-bold text-gold-dark">
+                      {order.type === "LIVRAISON" ? "Livraison" : "Retrait"} à {formatTime(order.requestedFor)}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-burgundy/50">{formatTime(order.createdAt)}</p>
+                  )}
                   {order.source === OrderSource.SITE_WEB && (
                     <span className="mt-1 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[11px] font-semibold text-gold-dark">
                       {t("caisse.webBadge")}

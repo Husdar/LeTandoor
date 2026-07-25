@@ -75,29 +75,67 @@ function getRingCompressor(ctx: AudioContext): DynamicsCompressorNode {
   return ringCompressor;
 }
 
+function playAudioLoop() {
+  if (ringInterval) return;
+  const ctx = getContext();
+  const begin = () => {
+    if (ringInterval) return;
+    const compressor = getRingCompressor(ctx);
+    scheduleDingDong(ctx, compressor, ctx.currentTime);
+    ringInterval = setInterval(() => {
+      scheduleDingDong(ctx, compressor, ctx.currentTime);
+    }, RING_INTERVAL_MS);
+  };
+  if (ctx.state === "suspended") {
+    ctx.resume().then(begin).catch(() => undefined);
+  } else {
+    begin();
+  }
+}
+
+function pauseAudioLoop() {
+  if (ringInterval) {
+    clearInterval(ringInterval);
+    ringInterval = null;
+  }
+}
+
+// Vrai tant qu'il existe au moins une commande en attente d'acceptation — indépendant du fait que
+// l'onglet soit actuellement affiché ou en arrière-plan (voir startRinging/stopRinging ci-dessous).
+let wantsRinging = false;
+let visibilityListenerAttached = false;
+
+function attachVisibilityListener() {
+  if (visibilityListenerAttached || typeof document === "undefined") return;
+  visibilityListenerAttached = true;
+  document.addEventListener("visibilitychange", () => {
+    if (!wantsRinging) return;
+    if (document.visibilityState === "visible") {
+      playAudioLoop();
+    } else {
+      pauseAudioLoop();
+    }
+  });
+}
+
 /**
  * Sonne en continu (comme une notification de livraison) jusqu'à l'appel de `stopRinging()` —
  * c'est à dire jusqu'à ce que le personnel ouvre la commande concernée. Rappeler cette fonction
  * pendant qu'elle sonne déjà ne relance pas une seconde boucle.
+ *
+ * Ne sonne que si l'onglet est actuellement affiché au premier plan — un onglet resté ouvert en
+ * arrière-plan (ou sur un écran que personne ne regarde) ne doit pas faire du bruit tout seul.
+ * Si l'onglet revient au premier plan alors qu'une commande est toujours en attente, la sonnerie
+ * reprend automatiquement.
  */
 export function startRinging() {
+  wantsRinging = true;
+  attachVisibilityListener();
   try {
-    const ctx = getContext();
-
-    const begin = () => {
-      if (ringInterval) return;
-      const compressor = getRingCompressor(ctx);
-      scheduleDingDong(ctx, compressor, ctx.currentTime);
-      ringInterval = setInterval(() => {
-        scheduleDingDong(ctx, compressor, ctx.currentTime);
-      }, RING_INTERVAL_MS);
-    };
-
-    if (ctx.state === "suspended") {
-      ctx.resume().then(begin).catch(() => undefined);
-    } else {
-      begin();
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+      return;
     }
+    playAudioLoop();
   } catch {
     // Audio context unavailable — fail silently rather than breaking the order flow.
   }
@@ -105,8 +143,6 @@ export function startRinging() {
 
 /** Coupe la sonnerie en cours (appelé quand il n'y a plus aucune commande site web non ouverte). */
 export function stopRinging() {
-  if (ringInterval) {
-    clearInterval(ringInterval);
-    ringInterval = null;
-  }
+  wantsRinging = false;
+  pauseAudioLoop();
 }

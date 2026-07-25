@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import clsx from "clsx";
 import { OrderItemStatus, OrderStatus, applyChannelPricing, type OrderItemInput } from "@le-tandoor/shared";
 import { useMenu } from "../../hooks/queries";
 import { api, ApiError } from "../../lib/api";
@@ -72,6 +73,19 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
     onSuccess: (jobs) => {
       if (jobs.length === 0) {
         setError("Aucune imprimante configurée pour les tickets cuisine (vérifiez Administration → Imprimantes).");
+        return;
+      }
+      const failed = jobs.find((j) => j.status === "ECHEC");
+      setError(failed ? failed.errorMessage ?? "Échec d'impression" : null);
+    },
+    onError: (err) => setError(err instanceof ApiError ? err.message : "Erreur d'impression"),
+  });
+
+  const printReceipt = useMutation({
+    mutationFn: () => api.post<{ status: string; errorMessage?: string | null }[]>(`/orders/${order.id}/print/RECU`),
+    onSuccess: (jobs) => {
+      if (jobs.length === 0) {
+        setError("Aucune imprimante configurée pour les tickets caisse (vérifiez Administration → Imprimantes).");
         return;
       }
       const failed = jobs.find((j) => j.status === "ECHEC");
@@ -227,19 +241,26 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
           </div>
           {error && <p className="mb-2 text-sm font-medium text-red-700">{error}</p>}
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-            <div className="grid grid-cols-2 gap-2 sm:contents">
+            <div className={clsx("grid gap-2 sm:contents", closed ? "grid-cols-2" : "grid-cols-3")}>
               <button className="btn-outline sm:flex-1" onClick={onClose}>
                 Fermer
               </button>
               {!closed && (
                 <button
-                  className="btn-outline sm:flex-1"
+                  className="btn-outline sm:flex-1 !px-1 text-xs sm:!px-4 sm:text-sm"
                   disabled={reprintTicket.isPending}
                   onClick={() => reprintTicket.mutate()}
                 >
-                  {reprintTicket.isPending ? "Impression…" : "Réimprimer ticket"}
+                  {reprintTicket.isPending ? "Impression…" : "Ticket cuisine"}
                 </button>
               )}
+              <button
+                className="btn-outline sm:flex-1 !px-1 text-xs sm:!px-4 sm:text-sm"
+                disabled={printReceipt.isPending}
+                onClick={() => printReceipt.mutate()}
+              >
+                {printReceipt.isPending ? "Impression…" : "Imprimer reçu"}
+              </button>
             </div>
             {!closed && order.status !== OrderStatus.SERVIE && (
               <button className="btn-gold sm:flex-1" onClick={() => markOrderServed.mutate()}>

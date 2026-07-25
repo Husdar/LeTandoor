@@ -17,7 +17,7 @@ import {
   IconReservations,
   IconPerformance,
   IconAdvice,
-  IconMarketing,
+  IconCustomers,
   IconAdmin,
   IconMenu,
   IconClose,
@@ -32,7 +32,7 @@ const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[]; icon: ty
   { to: "/reservations", labelKey: "nav.reservations", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconReservations },
   { to: "/performances", labelKey: "nav.performances", roles: [Role.ADMIN, Role.MANAGER], icon: IconPerformance },
   { to: "/conseils", labelKey: "nav.conseils", roles: [Role.ADMIN, Role.MANAGER], icon: IconAdvice },
-  { to: "/marketing", labelKey: "nav.marketing", roles: [Role.ADMIN, Role.MANAGER], icon: IconMarketing },
+  { to: "/clients", labelKey: "nav.clients", roles: [Role.ADMIN, Role.MANAGER], icon: IconCustomers },
   { to: "/admin", labelKey: "nav.admin", roles: [Role.ADMIN], icon: IconAdmin },
 ];
 
@@ -180,8 +180,11 @@ export default function Layout() {
         ))}
       </nav>
 
+      {/* pb-24 : réserve de la place en bas pour que le bouton flottant de l'assistant (fixed,
+          bottom-right) ne recouvre jamais le dernier bouton d'action d'une page (ex: "Ajouter"
+          en fin de formulaire). */}
       <main
-        className={clsx("flex-1 overflow-auto", contentIsUrdu && "font-urdu text-lg")}
+        className={clsx("flex-1 overflow-auto pb-24", contentIsUrdu && "font-urdu text-lg")}
         dir={contentIsUrdu ? "rtl" : "ltr"}
       >
         <Outlet />

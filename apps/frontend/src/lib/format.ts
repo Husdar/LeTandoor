@@ -7,6 +7,10 @@ export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export const ORDER_TYPE_LABELS: Record<string, string> = {
   SUR_PLACE: "Sur place",
   EMPORTER: "À emporter",
@@ -77,3 +81,16 @@ export const ORDER_TYPE_TEXT: Record<string, string> = {
   EMPORTER: "text-amber-700",
   LIVRAISON: "text-blue-700",
 };
+
+/** Numéro affiché au client/personnel : celui du site web (externalRef) s'il existe, sinon le
+ * numéro interne — pour qu'une commande "site web" porte le même numéro partout (app, ticket,
+ * email de confirmation), au lieu d'un numéro interne différent de celui vu par le client. */
+export function displayOrderRef(order: { orderNumber: number; externalRef?: string | null }): string {
+  return order.externalRef ?? String(order.orderNumber);
+}
+
+/** Retire un suffixe descriptif entre parenthèses en fin de nom (ex: "Butter Chicken (spécialité
+ * du chef)" -> "Butter Chicken"), pour l'aperçu du ticket cuisine simplifié. */
+export function shortenItemName(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
