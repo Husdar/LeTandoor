@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { WsEvent, OrderStatus, type WsMessage } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
-import { usePendingWebOrders } from "../store/pendingWebOrders";
+import { usePendingWebOrders, RECONCILE_GRACE_MS } from "../store/pendingWebOrders";
 import { useActiveOrders } from "../hooks/queries";
 import type { Order } from "../types";
 
@@ -18,9 +18,11 @@ export function useRingReconciliation() {
 
   useEffect(() => {
     if (!orders) return;
-    const pendingIds = usePendingWebOrders.getState().ids;
-    if (pendingIds.size === 0) return;
-    for (const id of pendingIds) {
+    const pending = usePendingWebOrders.getState().ids;
+    if (pending.size === 0) return;
+    const now = Date.now();
+    for (const [id, addedAt] of pending) {
+      if (now - addedAt < RECONCILE_GRACE_MS) continue;
       const order = orders.find((o) => o.id === id);
       if (!order || order.status !== OrderStatus.NOUVELLE) {
         usePendingWebOrders.getState().acknowledge(id);

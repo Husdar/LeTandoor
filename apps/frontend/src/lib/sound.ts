@@ -14,17 +14,30 @@ function getAudioElement(): HTMLAudioElement {
  * (tap, clic, touche) n'a eu lieu — une nouvelle commande arrivant par WebSocket n'en est pas un.
  * On joue donc puis coupe immédiatement dès le premier geste (login, navigation) pour débloquer
  * la lecture ultérieure des sonneries déclenchées sans interaction directe.
+ *
+ * Ce déblocage ne doit avoir lieu qu'une seule fois : sinon, CHAQUE tap/clic dans l'appli (ouvrir
+ * une commande, cliquer un bouton...) relance ce play()-puis-pause() sur le MÊME élément audio, et
+ * si une sonnerie est alors en cours, son .then(() => el.pause()) fini par la couper au tap
+ * suivant — bug observé : la sonnerie s'arrête d'elle-même après un court instant. On retire donc
+ * les écouteurs après le premier déclenchement, et si une sonnerie était déjà en attente (autoplay
+ * bloqué avant ce tout premier geste), on la relance au lieu de rejouer/couper le même son.
  */
 export function initAudioUnlock() {
   if (unlockAttached || typeof window === "undefined") return;
   unlockAttached = true;
 
-  const unlock = () => {
+  function unlock() {
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("keydown", unlock);
+    if (wantsRinging) {
+      playLoop();
+      return;
+    }
     const el = getAudioElement();
     el.play()
       .then(() => el.pause())
       .catch(() => undefined);
-  };
+  }
 
   window.addEventListener("pointerdown", unlock);
   window.addEventListener("keydown", unlock);
