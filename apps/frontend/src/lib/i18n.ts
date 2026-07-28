@@ -6,7 +6,6 @@ type Dict = Record<string, { fr: string; ur: string }>;
 // La page Commandes reste toujours en français, quel que soit ce réglage.
 const dict: Dict = {
   "nav.commandes": { fr: "Commandes", ur: "آرڈرز" },
-  "nav.cuisine": { fr: "Cuisine", ur: "باورچی خانہ" },
   "nav.caisse": { fr: "Caisse", ur: "کیش کاؤنٹر" },
   "nav.salle": { fr: "Plan de salle", ur: "ہال کا نقشہ" },
   "nav.reservations": { fr: "Réservations", ur: "بکنگ" },
@@ -25,15 +24,6 @@ const dict: Dict = {
   "login.password": { fr: "Mot de passe", ur: "پاس ورڈ" },
   "login.submit": { fr: "Se connecter", ur: "لاگ ان کریں" },
   "login.submitting": { fr: "Connexion…", ur: "لاگ ان ہو رہا ہے…" },
-
-  "cuisine.title": { fr: "Cuisine", ur: "باورچی خانہ" },
-  "cuisine.orderLabel": { fr: "Commande n°", ur: "آرڈر نمبر " },
-  "cuisine.empty": { fr: "Aucune commande active pour le moment.", ur: "فی الحال کوئی آرڈر نہیں۔" },
-  "cuisine.new": { fr: "Nouvelles", ur: "نئے آرڈرز" },
-  "cuisine.preparing": { fr: "En préparation", ur: "تیار ہو رہا ہے" },
-  "cuisine.ready": { fr: "Prêtes", ur: "تیار" },
-  "cuisine.start": { fr: "Démarrer", ur: "شروع کریں" },
-  "cuisine.markReady": { fr: "Marquer prête", ur: "تیار قرار دیں" },
 
   "caisse.title": { fr: "Caisse", ur: "کیش کاؤنٹر" },
   "caisse.loading": { fr: "Chargement…", ur: "لوڈ ہو رہا ہے…" },

@@ -11,7 +11,6 @@ import AssistantWidget from "./AssistantWidget";
 import ChangePasswordModal from "./ChangePasswordModal";
 import {
   IconOrders,
-  IconKitchen,
   IconCashier,
   IconFloorPlan,
   IconReservations,
@@ -25,8 +24,7 @@ import {
 } from "./icons";
 
 const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[]; icon: typeof IconOrders }[] = [
-  { to: "/commandes", labelKey: "nav.commandes", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconOrders },
-  { to: "/cuisine", labelKey: "nav.cuisine", roles: [Role.ADMIN, Role.MANAGER, Role.CUISINE], icon: IconKitchen },
+  { to: "/commandes", labelKey: "nav.commandes", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR, Role.CUISINE], icon: IconOrders },
   { to: "/caisse", labelKey: "nav.caisse", roles: [Role.ADMIN, Role.MANAGER, Role.CAISSE], icon: IconCashier },
   { to: "/salle", labelKey: "nav.salle", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconFloorPlan },
   { to: "/reservations", labelKey: "nav.reservations", roles: [Role.ADMIN, Role.MANAGER, Role.SERVEUR], icon: IconReservations },

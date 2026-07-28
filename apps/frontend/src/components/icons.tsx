@@ -29,16 +29,6 @@ export function IconOrders(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function IconKitchen(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <path d="M6 21h12" />
-      <path d="M7 21V10a5 5 0 0 1 10 0v11" />
-      <path d="M7 10h10" />
-    </Icon>
-  );
-}
-
 export function IconCashier(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

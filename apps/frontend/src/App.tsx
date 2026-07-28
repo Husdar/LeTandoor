@@ -10,7 +10,6 @@ import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
 import LoginPage from "./routes/LoginPage";
 import CommandesPage from "./routes/commandes/CommandesPage";
-import CuisinePage from "./routes/cuisine/CuisinePage";
 import CaissePage from "./routes/caisse/CaissePage";
 import SallePage from "./routes/salle/SallePage";
 import ReservationsPage from "./routes/reservations/ReservationsPage";
@@ -51,16 +50,8 @@ export default function App() {
           <Route
             path="/commandes"
             element={
-              <RequireRole roles={[Role.ADMIN, Role.MANAGER, Role.SERVEUR]}>
+              <RequireRole roles={[Role.ADMIN, Role.MANAGER, Role.SERVEUR, Role.CUISINE]}>
                 <CommandesPage />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/cuisine"
-            element={
-              <RequireRole roles={[Role.ADMIN, Role.MANAGER, Role.CUISINE]}>
-                <CuisinePage />
               </RequireRole>
             }
           />
