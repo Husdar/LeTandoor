@@ -17,6 +17,7 @@ import {
   updateOrderStatus,
   closeOrder,
   listActiveOrders,
+  listOrderHistory,
   getOrder,
 } from "./service.js";
 import { printOrder } from "../print/service.js";
@@ -25,6 +26,7 @@ const canTakeOrders = [Role.ADMIN, Role.MANAGER, Role.SERVEUR];
 const canUpdateItemStatus = [Role.ADMIN, Role.MANAGER, Role.SERVEUR, Role.CUISINE];
 const canClose = [Role.ADMIN, Role.MANAGER, Role.CAISSE];
 const canPrint = [Role.ADMIN, Role.MANAGER, Role.SERVEUR, Role.CUISINE, Role.CAISSE];
+const canViewHistory = [Role.ADMIN, Role.MANAGER];
 
 export default async function ordersRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", fastify.authenticate);
@@ -33,6 +35,20 @@ export default async function ordersRoutes(fastify: FastifyInstance) {
     const orders = await listActiveOrders();
     return reply.send(orders);
   });
+
+  fastify.get(
+    "/api/orders/history",
+    { preHandler: fastify.requireRole(canViewHistory) },
+    async (request, reply) => {
+      const { search, from, to } = request.query as { search?: string; from?: string; to?: string };
+      const orders = await listOrderHistory({
+        search,
+        from: from ? new Date(from) : undefined,
+        to: to ? new Date(to) : undefined,
+      });
+      return reply.send(orders);
+    }
+  );
 
   fastify.get("/api/orders/:id", async (request, reply) => {
     const { id } = request.params as { id: string };

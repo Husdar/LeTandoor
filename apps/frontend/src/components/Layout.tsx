@@ -3,12 +3,14 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { Role } from "@le-tandoor/shared";
 import { useAuthStore } from "../store/auth";
+import { useScreenLock } from "../store/screenLock";
 import { api } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useRingReconciliation } from "../lib/ws";
 import LanguageToggle from "./LanguageToggle";
 import AssistantWidget from "./AssistantWidget";
 import ChangePasswordModal from "./ChangePasswordModal";
+import PinLockScreen from "./PinLockScreen";
 import {
   IconOrders,
   IconCashier,
@@ -17,9 +19,11 @@ import {
   IconPerformance,
   IconAdvice,
   IconCustomers,
+  IconHistory,
   IconAdmin,
   IconMenu,
   IconClose,
+  IconLock,
   LogoMark,
 } from "./icons";
 
@@ -31,12 +35,15 @@ const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles: Role[]; icon: ty
   { to: "/performances", labelKey: "nav.performances", roles: [Role.ADMIN, Role.MANAGER], icon: IconPerformance },
   { to: "/conseils", labelKey: "nav.conseils", roles: [Role.ADMIN, Role.MANAGER], icon: IconAdvice },
   { to: "/clients", labelKey: "nav.clients", roles: [Role.ADMIN, Role.MANAGER], icon: IconCustomers },
+  { to: "/historique", labelKey: "nav.historique", roles: [Role.ADMIN, Role.MANAGER], icon: IconHistory },
   { to: "/admin", labelKey: "nav.admin", roles: [Role.ADMIN], icon: IconAdmin },
 ];
 
 export default function Layout() {
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
+  const locked = useScreenLock((s) => s.locked);
+  const lock = useScreenLock((s) => s.lock);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, lang } = useT();
@@ -56,6 +63,10 @@ export default function Layout() {
     await api.post("/auth/logout").catch(() => undefined);
     clear();
     navigate("/login", { replace: true });
+  }
+
+  if (locked) {
+    return <PinLockScreen />;
   }
 
   return (
@@ -90,6 +101,13 @@ export default function Layout() {
             <span className="underline-offset-2 group-hover:underline">
               {user?.name} <span className="text-gold">· {user?.role}</span>
             </span>
+          </button>
+          <button
+            onClick={lock}
+            title={t("layout.lock")}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-cream/80 transition hover:bg-cream/10"
+          >
+            <IconLock className="h-5 w-5" />
           </button>
           <button
             onClick={handleLogout}
@@ -146,9 +164,21 @@ export default function Layout() {
               </span>
             </button>
           </div>
-          <button onClick={handleLogout} className="btn-outline mt-3 w-full">
-            {t("layout.logout")}
-          </button>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                lock();
+                setMobileMenuOpen(false);
+              }}
+              className="btn-outline flex items-center justify-center gap-2"
+            >
+              <IconLock className="h-4 w-4" />
+              {t("layout.lock")}
+            </button>
+            <button onClick={handleLogout} className="btn-outline">
+              {t("layout.logout")}
+            </button>
+          </div>
         </div>
       )}
 

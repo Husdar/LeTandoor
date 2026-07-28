@@ -16,6 +16,7 @@ import ReservationsPage from "./routes/reservations/ReservationsPage";
 import PerformancesPage from "./routes/performances/PerformancesPage";
 import ConseilsPage from "./routes/conseils/ConseilsPage";
 import ClientsPage from "./routes/clients/ClientsPage";
+import HistoriquePage from "./routes/historique/HistoriquePage";
 import AdminPage from "./routes/admin/AdminPage";
 
 export default function App() {
@@ -100,6 +101,14 @@ export default function App() {
             element={
               <RequireRole roles={[Role.ADMIN, Role.MANAGER]}>
                 <ClientsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/historique"
+            element={
+              <RequireRole roles={[Role.ADMIN, Role.MANAGER]}>
+                <HistoriquePage />
               </RequireRole>
             }
           />

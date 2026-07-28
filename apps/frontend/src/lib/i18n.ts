@@ -12,10 +12,12 @@ const dict: Dict = {
   "nav.performances": { fr: "Performances", ur: "کارکردگی" },
   "nav.conseils": { fr: "Conseils", ur: "مشورے" },
   "nav.clients": { fr: "Clients", ur: "کلائنٹس" },
+  "nav.historique": { fr: "Historique", ur: "تاریخ" },
   "nav.admin": { fr: "Administration", ur: "انتظامیہ" },
 
   "layout.subtitle": { fr: "Gestion du restaurant", ur: "ریسٹورنٹ کا انتظام" },
   "layout.logout": { fr: "Déconnexion", ur: "لاگ آؤٹ" },
+  "layout.lock": { fr: "Verrouiller", ur: "لاک کریں" },
   "layout.openMenu": { fr: "Ouvrir le menu", ur: "مینو کھولیں" },
   "layout.closeMenu": { fr: "Fermer le menu", ur: "مینو بند کریں" },
 

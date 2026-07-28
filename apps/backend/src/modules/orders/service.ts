@@ -355,3 +355,43 @@ export async function listActiveOrders() {
 export async function getOrder(orderId: string) {
   return prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: fullOrderInclude });
 }
+
+export interface OrderHistoryFilters {
+  search?: string;
+  from?: Date;
+  to?: Date;
+}
+
+/** Historique complet (y compris commandes clôturées/annulées), pour retrouver une commande
+ * passée par nom/téléphone/email/numéro client, contrairement à listActiveOrders(). Limité à 300
+ * résultats — largement suffisant pour un seul restaurant, sans avoir à gérer de pagination. */
+export async function listOrderHistory(filters: OrderHistoryFilters) {
+  const { search, from, to } = filters;
+  const where: Prisma.OrderWhereInput = {};
+
+  if (from || to) {
+    where.createdAt = {
+      ...(from ? { gte: from } : {}),
+      ...(to ? { lte: to } : {}),
+    };
+  }
+
+  const term = search?.trim();
+  if (term) {
+    const asNumber = Number(term);
+    where.OR = [
+      { customerName: { contains: term, mode: "insensitive" } },
+      { customerPhone: { contains: term, mode: "insensitive" } },
+      { customerEmail: { contains: term, mode: "insensitive" } },
+      { externalRef: { contains: term, mode: "insensitive" } },
+      ...(Number.isInteger(asNumber) ? [{ orderNumber: asNumber }] : []),
+    ];
+  }
+
+  return prisma.order.findMany({
+    where,
+    include: fullOrderInclude,
+    orderBy: { createdAt: "desc" },
+    take: 300,
+  });
+}

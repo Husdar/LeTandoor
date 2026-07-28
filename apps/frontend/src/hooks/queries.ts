@@ -67,3 +67,22 @@ export function useCustomers() {
     queryFn: () => api.get<CustomerProfile[]>("/customers"),
   });
 }
+
+export interface OrderHistoryFilters {
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
+export function useOrderHistory(filters: OrderHistoryFilters) {
+  const params = new URLSearchParams();
+  if (filters.search) params.set("search", filters.search);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  const qs = params.toString();
+
+  return useQuery({
+    queryKey: ["orders", "history", filters.search, filters.from, filters.to],
+    queryFn: () => api.get<Order[]>(`/orders/history${qs ? `?${qs}` : ""}`),
+  });
+}
