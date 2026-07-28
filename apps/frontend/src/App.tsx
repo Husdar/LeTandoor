@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Role } from "@le-tandoor/shared";
 import { useAuthStore } from "./store/auth";
@@ -10,15 +10,19 @@ import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
 import LoginPage from "./routes/LoginPage";
-import CommandesPage from "./routes/commandes/CommandesPage";
-import CaissePage from "./routes/caisse/CaissePage";
-import SallePage from "./routes/salle/SallePage";
-import ReservationsPage from "./routes/reservations/ReservationsPage";
-import PerformancesPage from "./routes/performances/PerformancesPage";
-import ConseilsPage from "./routes/conseils/ConseilsPage";
-import ClientsPage from "./routes/clients/ClientsPage";
-import HistoriquePage from "./routes/historique/HistoriquePage";
-import AdminPage from "./routes/admin/AdminPage";
+
+// Chargées à la demande (une seule route à la fois est réellement utile à un instant donné) —
+// avant ce découpage, tout partait dans un unique bundle de 760 Ko (dont Recharts, utilisé
+// uniquement par Performances), téléchargé et exécuté même pour ouvrir simplement Commandes.
+const CommandesPage = lazy(() => import("./routes/commandes/CommandesPage"));
+const CaissePage = lazy(() => import("./routes/caisse/CaissePage"));
+const SallePage = lazy(() => import("./routes/salle/SallePage"));
+const ReservationsPage = lazy(() => import("./routes/reservations/ReservationsPage"));
+const PerformancesPage = lazy(() => import("./routes/performances/PerformancesPage"));
+const ConseilsPage = lazy(() => import("./routes/conseils/ConseilsPage"));
+const ClientsPage = lazy(() => import("./routes/clients/ClientsPage"));
+const HistoriquePage = lazy(() => import("./routes/historique/HistoriquePage"));
+const AdminPage = lazy(() => import("./routes/admin/AdminPage"));
 
 export default function App() {
   const initialized = useAuthStore((s) => s.initialized);

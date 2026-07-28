@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { Role } from "@le-tandoor/shared";
@@ -219,7 +219,15 @@ export default function Layout() {
         className={clsx("flex-1 overflow-auto pb-24", contentIsUrdu && "font-urdu text-lg")}
         dir={contentIsUrdu ? "rtl" : "ltr"}
       >
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center p-12">
+              <span className="font-display text-lg text-burgundy/40">Chargement…</span>
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* Toujours visible (peu importe la taille d'écran) : sur tablette la barre du haut peut
