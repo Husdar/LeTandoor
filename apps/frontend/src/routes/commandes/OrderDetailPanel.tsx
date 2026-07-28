@@ -59,6 +59,14 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
     onError: (err) => setError(err instanceof ApiError ? err.message : "Erreur"),
   });
 
+  // "Accepter"/"Marquer prête" font avancer les articles (comme dans l'onglet Commandes) sans
+  // fermer le panneau — contrairement à "Marquer servie" qui clôt l'étape et referme le panneau.
+  const advanceOrder = useMutation({
+    mutationFn: (status: OrderItemStatus) => api.patch(`/orders/${order.id}/advance`, { status }),
+    onSuccess: invalidate,
+    onError: (err) => setError(err instanceof ApiError ? err.message : "Erreur"),
+  });
+
   const cancelOrder = useMutation({
     mutationFn: (reason: string) => api.patch(`/orders/${order.id}/status`, { status: OrderStatus.ANNULEE, reason }),
     onSuccess: () => {
@@ -262,7 +270,25 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
                 {printReceipt.isPending ? "Impression…" : "Imprimer reçu"}
               </button>
             </div>
-            {!closed && order.status !== OrderStatus.SERVIE && (
+            {!closed && order.status === OrderStatus.NOUVELLE && (
+              <button
+                className="btn-gold sm:flex-1"
+                disabled={advanceOrder.isPending}
+                onClick={() => advanceOrder.mutate(OrderItemStatus.EN_PREPARATION)}
+              >
+                Accepter
+              </button>
+            )}
+            {!closed && order.status === OrderStatus.EN_PREPARATION && (
+              <button
+                className="btn-gold sm:flex-1"
+                disabled={advanceOrder.isPending}
+                onClick={() => advanceOrder.mutate(OrderItemStatus.PRETE)}
+              >
+                Marquer prête
+              </button>
+            )}
+            {!closed && order.status === OrderStatus.PRETE && (
               <button className="btn-gold sm:flex-1" onClick={() => markOrderServed.mutate()}>
                 Marquer servie
               </button>
