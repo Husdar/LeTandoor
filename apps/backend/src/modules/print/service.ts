@@ -105,7 +105,7 @@ export async function printOrder(orderId: string, ticketType: PrintTicketType) {
     try {
       const client = createPrinterClient(printerRecord.ip, printerRecord.port);
       if (ticketType === PrintTicketType.CUISINE) {
-        writeKitchenTicket(client, order);
+        await writeKitchenTicket(client, order);
       } else {
         await writeReceipt(client, order);
       }

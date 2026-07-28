@@ -17,6 +17,13 @@ export const ORDER_TYPE_LABELS: Record<string, string> = {
   LIVRAISON: "Livraison",
 };
 
+export const PAYMENT_LABELS: Record<string, string> = {
+  ESPECES: "Especes",
+  CARTE: "Carte",
+  TICKET_RESTAURANT: "Ticket restaurant",
+  AUTRE: "Autre",
+};
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   NOUVELLE: "Nouvelle",
   EN_PREPARATION: "En préparation",

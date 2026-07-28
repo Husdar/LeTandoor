@@ -102,24 +102,15 @@ export function writeTestTicket(printer: ThermalPrinter) {
   printer.cut();
 }
 
-// Espacement de ligne par défaut ESC/POS (1/6 pouce ≈ 4,23 mm) — sert à convertir une marge
-// voulue en millimètres vers un nombre de sauts de ligne, pour le haut du ticket cuisine.
-const DEFAULT_LINE_HEIGHT_MM = 4.23;
-const KITCHEN_TICKET_HANG_MARGIN_MM = 50;
-const KITCHEN_TICKET_HANG_MARGIN_LINES = Math.round(KITCHEN_TICKET_HANG_MARGIN_MM / DEFAULT_LINE_HEIGHT_MM);
-
 /** Ticket cuisine volontairement minimal : juste le numéro, le contexte (type/table/horaire) et
  * les plats — pas de branding ni de coordonnées client, pour aller droit au but en cuisine. */
-export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRelations) {
+export async function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRelations) {
   const tableLabel = order.orderTables[0]?.table?.name;
 
-  // Marge blanche en haut du ticket (~5cm) pour pouvoir l'accrocher en cuisine (pince/tige) sans
-  // cacher le contenu imprimé en dessous.
-  for (let i = 0; i < KITCHEN_TICKET_HANG_MARGIN_LINES; i++) {
-    printer.newLine();
-  }
-
   printer.alignCenter();
+  await printer.printImageBuffer(Buffer.from(LOGO_PNG_BASE64, "base64"));
+  printer.newLine();
+
   printer.bold(true);
   printer.setTextQuadArea();
   printer.println(`#${ref(order)}`);

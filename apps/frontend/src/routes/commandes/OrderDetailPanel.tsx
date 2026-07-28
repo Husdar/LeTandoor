@@ -9,6 +9,7 @@ import StatusBadge from "../../components/StatusBadge";
 import type { Order, MenuItem } from "../../types";
 import ItemOptionsModal, { type AddedLine } from "./ItemOptionsModal";
 import TicketPreview from "./TicketPreview";
+import ReceiptPreview from "./ReceiptPreview";
 
 export default function OrderDetailPanel({ order, onClose }: { order: Order; onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
   const [addingItem, setAddingItem] = useState(false);
   const [pickingItem, setPickingItem] = useState<MenuItem | null>(null);
   const [showTicket, setShowTicket] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"RECU" | "CUISINE">("RECU");
   const [error, setError] = useState<string | null>(null);
 
   const tableLabel = order.orderTables[0]?.table?.name;
@@ -236,7 +238,27 @@ export default function OrderDetailPanel({ order, onClose }: { order: Order; onC
             </button>
             {showTicket && (
               <div className="mt-3">
-                <TicketPreview order={order} />
+                <div className="mb-3 flex justify-center gap-2">
+                  <button
+                    className={clsx(
+                      "rounded-full px-4 py-1.5 text-sm font-medium transition",
+                      previewMode === "RECU" ? "bg-burgundy text-cream" : "bg-burgundy/10 text-burgundy/70"
+                    )}
+                    onClick={() => setPreviewMode("RECU")}
+                  >
+                    Reçu
+                  </button>
+                  <button
+                    className={clsx(
+                      "rounded-full px-4 py-1.5 text-sm font-medium transition",
+                      previewMode === "CUISINE" ? "bg-burgundy text-cream" : "bg-burgundy/10 text-burgundy/70"
+                    )}
+                    onClick={() => setPreviewMode("CUISINE")}
+                  >
+                    Cuisine
+                  </button>
+                </div>
+                {previewMode === "RECU" ? <ReceiptPreview order={order} /> : <TicketPreview order={order} />}
               </div>
             )}
           </div>

@@ -91,6 +91,7 @@ export interface Order {
   requestedFor?: string | null;
   prepMinutes?: number | null;
   subtotal: string;
+  deliveryFee: string;
   discountAmount: string;
   discountReason?: string | null;
   total: string;
