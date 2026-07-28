@@ -87,9 +87,14 @@ export async function ingestOrderEmail(params: {
             const matched = item.promoLabel
               ? (matchMenuItem(item.promoLabel, menuItems) ?? matchMenuItem(item.name, menuItems))
               : matchMenuItem(item.name, menuItems);
+            // Le nom affiché (carte commande, ticket, caisse) doit indiquer explicitement qu'il
+            // s'agit de l'offre — sinon rien ne distingue visuellement "Poulet Curry" à 15,50€ du
+            // plat à la carte classique, malgré le bon rattachement interne (voir commande #2175
+            // du 2026-07-28, correctement rattachée à "Bowl" mais affichée comme "Poulet Curry").
+            const nameSnapshot = item.promoLabel ? `${item.promoLabel} (1+1 offert) - ${item.name}` : item.name;
             return {
               menuItemId: matched?.id,
-              nameSnapshot: item.name,
+              nameSnapshot,
               unitPriceSnapshot: item.unitPrice,
               quantity: item.quantity,
               status: OrderItemStatus.NOUVELLE,
