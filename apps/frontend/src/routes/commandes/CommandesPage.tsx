@@ -59,8 +59,10 @@ export default function CommandesPage() {
     },
   });
 
+  // Ouvrir/regarder une commande ne coupe PAS la sonnerie — seule une vraie acceptation le fait
+  // (voir handleAccept). Sinon, un simple coup d'œil sans accepter ferait taire l'alerte alors que
+  // la commande reste réellement en attente, ce qui va à l'encontre de son but.
   function handleOpenOrder(order: Order) {
-    usePendingWebOrders.getState().acknowledge(order.id);
     setSelectedOrder(order);
   }
 
@@ -209,7 +211,9 @@ export default function CommandesPage() {
         <OrderDetailPanel order={freshSelectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
 
-      {orderAwaitingAcceptance && (
+      {/* Masqué tant que le détail d'une commande est ouvert, pour ne pas empiler deux fenêtres —
+          il réapparaît à la fermeture si la commande n'a toujours pas été acceptée. */}
+      {orderAwaitingAcceptance && !selectedOrder && (
         <NewOrderAcceptPopup
           order={orderAwaitingAcceptance}
           isPending={advanceOrder.isPending}
