@@ -107,13 +107,6 @@ export default function Layout() {
             </span>
           </button>
           <button
-            onClick={toggleFullscreen}
-            title={isFullscreen ? t("layout.fullscreenExit") : t("layout.fullscreenEnter")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-cream/80 transition hover:bg-cream/10"
-          >
-            {isFullscreen ? <IconShrink className="h-5 w-5" /> : <IconExpand className="h-5 w-5" />}
-          </button>
-          <button
             onClick={lock}
             title={t("layout.lock")}
             className="flex h-9 w-9 items-center justify-center rounded-full text-cream/80 transition hover:bg-cream/10"
@@ -175,27 +168,18 @@ export default function Layout() {
               </span>
             </button>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <button
-              onClick={() => {
-                toggleFullscreen();
-                setMobileMenuOpen(false);
-              }}
-              className="btn-outline flex items-center justify-center gap-2 !px-2 text-sm"
-            >
-              {isFullscreen ? <IconShrink className="h-4 w-4" /> : <IconExpand className="h-4 w-4" />}
-            </button>
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               onClick={() => {
                 lock();
                 setMobileMenuOpen(false);
               }}
-              className="btn-outline flex items-center justify-center gap-2 !px-2 text-sm"
+              className="btn-outline flex items-center justify-center gap-2"
             >
               <IconLock className="h-4 w-4" />
               {t("layout.lock")}
             </button>
-            <button onClick={handleLogout} className="btn-outline !px-2 text-sm">
+            <button onClick={handleLogout} className="btn-outline">
               {t("layout.logout")}
             </button>
           </div>
@@ -237,6 +221,16 @@ export default function Layout() {
       >
         <Outlet />
       </main>
+
+      {/* Toujours visible (peu importe la taille d'écran) : sur tablette la barre du haut peut
+          basculer en menu hamburger, ce bouton doit rester trouvable dans tous les cas. */}
+      <button
+        onClick={toggleFullscreen}
+        title={isFullscreen ? t("layout.fullscreenExit") : t("layout.fullscreenEnter")}
+        className="fixed bottom-5 left-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-burgundy text-cream shadow-lg transition hover:bg-burgundy-light active:scale-95"
+      >
+        {isFullscreen ? <IconShrink className="h-6 w-6" /> : <IconExpand className="h-6 w-6" />}
+      </button>
 
       <AssistantWidget />
     </div>

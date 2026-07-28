@@ -11,6 +11,7 @@ export default function TicketPreview({ order }: { order: Order }) {
 
   return (
     <div className="mx-auto w-full max-w-[300px] rounded-lg border border-dashed border-burgundy/30 bg-[#fdfaf3] p-4 font-mono text-[11px] leading-tight text-burgundy shadow-inner">
+      <img src="/logo.png" alt="Le Tandoor" className="mx-auto mb-2 h-10 w-auto object-contain" />
       <p className="text-center text-lg font-bold">#{displayOrderRef(order)}</p>
       <p className="text-center font-bold">
         {ORDER_TYPE_LABELS[order.type]}
