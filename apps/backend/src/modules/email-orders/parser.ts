@@ -6,6 +6,10 @@ export interface ParsedEmailOrderItem {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  /** Nom du produit promotionnel ("Bowl") pour les offres groupées ("1 Bowl acheté = 1 Bowl
+   * offert — <saveur>") — sert à rattacher l'article au bon menu (ex: "Bowl") plutôt qu'au plat à
+   * la carte homonyme de la saveur, qui a un prix et une catégorie différents. */
+  promoLabel?: string;
 }
 
 export interface ParsedEmailOrder {
@@ -28,6 +32,13 @@ export interface ParsedEmailOrder {
 }
 
 export class EmailParseError extends Error {}
+
+/** Ramène un créneau "en toutes lettres" ("19 heures") au format abrégé ("19h") attendu par
+ * `resolveRequestedTime` — les deux formats ont été observés selon la commande. */
+function normalizeTimeLabel(raw: string): string {
+  const heuresMatch = raw.match(/^(\d{1,2})\s*heures?$/i);
+  return heuresMatch ? `${heuresMatch[1]}h` : raw.trim();
+}
 
 /** Combine un créneau brut ("19h" ou "19h30") avec la date de réception pour obtenir un instant complet, en heure de Paris. */
 export function resolveRequestedTime(label: string, referenceDate: Date): Date {
@@ -91,27 +102,40 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
   const itemRegex =
     /([^\n]+)\n(?:Comman(?:der|de)\s*:\s*([^\n]+)\n)?\s*(\d+)\s*[×x]\s*€\s*([\d.,]+)\s*(?:\n\s*€\s*([\d.,]+)|=\s*€\s*([\d.,]+))/g;
   const items: ParsedEmailOrderItem[] = [];
-  let fulfillmentLabel = "";
+  // Deux signaux distincts, de fiabilité différente : "Commander: X" (gabarit A, très fiable) et
+  // le suffixe "— À emporter" par article (gabarit C) qui s'est avéré peu fiable en pratique — vu
+  // sur une vraie commande #2164 où CHAQUE article portait "— À emporter" alors que la commande
+  // était une vraie livraison ("Méthode d'expédition: Livraison hors lorient" + adresse + frais de
+  // livraison réels). Les deux sont donc gardés séparés ; seul "Commander:" fait foi seul,
+  // "Méthode d'expédition" passe avant le suffixe par article dans isDelivery ci-dessous.
+  let commanderLabel = "";
+  let dashFulfillmentLabel = "";
   let match: RegExpExecArray | null;
   while ((match = itemRegex.exec(itemsSection))) {
     const [, rawName, fulfillment, qty, unitPrice, lineTotalNextLine, lineTotalSameLine] = match;
-    if (fulfillment) fulfillmentLabel = fulfillment.trim();
+    if (fulfillment) commanderLabel = fulfillment.trim();
 
     // Le tiret cadratin a deux usages opposés selon le gabarit, à distinguer :
-    //  - offre groupée : "- 1 acheté = 1 offert — 2x Poulet Curry" (le vrai nom SUIT le tiret)
+    //  - offre groupée : "- 1 Bowl acheté = 1 Bowl offert — 2x Poulet Curry" (le vrai nom SUIT le
+    //    tiret ; le texte AVANT contient le nom du produit promotionnel, ex "Bowl", à extraire
+    //    pour rattacher l'article au bon menu plutôt qu'au plat homonyme de la saveur — voir
+    //    commande #2145 du 2026-07-23 et commande Poulet Tikka Massala du 2026-07-26 où l'article
+    //    "Bowl" a été confondu avec le plat à la carte du même nom de saveur).
     //  - mode de retrait par article : "- Poisson Kashmiri — À emporter" (le vrai nom PRÉCÈDE le
-    //    tiret, suivi du mode de retrait — à traiter comme un "Commander: ..." si aucun n'est
-    //    déjà connu, car c'est un signal fiable pour le type de commande).
+    //    tiret, suivi du mode de retrait — capturé à part, voir commentaire ci-dessus).
     let name = rawName.trim().replace(/^-\s*/, "");
+    let promoLabel: string | undefined;
     const dashIdx = name.lastIndexOf("—");
     if (dashIdx >= 0) {
       const before = name.slice(0, dashIdx).trim();
       const after = name.slice(dashIdx + 1).trim();
       if (/^(à emporter|a emporter|emporter|livraison|sur place)$/i.test(after)) {
         name = before;
-        if (!fulfillmentLabel) fulfillmentLabel = after;
+        if (!dashFulfillmentLabel) dashFulfillmentLabel = after;
       } else {
         name = after;
+        const promoMatch = before.match(/^\d+\s+(.+?)\s+achet[ée]/i);
+        if (promoMatch) promoLabel = promoMatch[1].trim();
       }
     }
     name = name.replace(/^\d+\s*x\s*/i, "");
@@ -121,6 +145,7 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
       quantity: Number(qty),
       unitPrice: toNumber(unitPrice),
       lineTotal: toNumber(lineTotalNextLine ?? lineTotalSameLine),
+      promoLabel,
     });
   }
   if (items.length === 0) {
@@ -149,13 +174,16 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
   const paymentMatch = body.match(/Mode de paiement\s*:\s*([^\n]+)/i);
 
   // Créneau choisi par le client : présent uniquement dans les emails "Nouvelle commande" et
-  // "confirmée" (pas dans "expédiée"), sous la forme "... Livraison : 19h-22h" suivi de "19h"
-  // (sur sa propre ligne, ou accolé sur la même ligne selon le gabarit).
+  // "confirmée" (pas dans "expédiée"), sous la forme "... Livraison : 19h-22h" suivi du créneau
+  // choisi (sur sa propre ligne, ou accolé sur la même ligne selon le gabarit). Le créneau lui-même
+  // a été vu sous deux formats selon la commande : abrégé ("19h", "19h30") et en toutes lettres
+  // ("19 heures") — vu sur la commande #2164 du 2026-07-25, qui a fait échouer la capture de
+  // l'heure de retrait (requestedFor est resté vide) tant que seul le format abrégé était géré.
   const slotMatch = body.match(
-    /Délai minimum\s*:\s*(\d+)\s*min[\s\S]*?Livraison\s*:\s*\d{1,2}h\d{0,2}-\d{1,2}h\d{0,2}\s*\n?\s*(\d{1,2}h\d{0,2})\b/i
+    /Délai minimum\s*:\s*(\d+)\s*min[\s\S]*?Livraison\s*:\s*\d{1,2}h\d{0,2}-\d{1,2}h\d{0,2}\s*\n?\s*(\d{1,2}h\d{0,2}|\d{1,2}\s*heures?)\b/i
   );
   const prepMinutes = slotMatch ? Number(slotMatch[1]) : undefined;
-  const requestedTimeLabel = slotMatch ? slotMatch[2] : undefined;
+  const requestedTimeLabel = slotMatch ? normalizeTimeLabel(slotMatch[2]) : undefined;
 
   // Bloc client : capturé jusqu'au pied de page connu (les deux gabarits ont des textes différents
   // ici), puis on isole "Méthode d'expédition" séparément car elle peut être accolée au téléphone
@@ -191,17 +219,17 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
 
   const meaningfulAddress = addressLines.filter((l) => l.length > 1 && !/^X(\s?X)*$/.test(l));
 
-  // L'ancien gabarit indiquait le type par article ("Commander: Livraison/À emporter") — fait foi
-  // si présent. Le nouveau ne le fait plus : "Méthode d'expédition" est alors le repère le plus
-  // fiable (ex: "Livraison à domicile" vs le nom du point de retrait, ex: "Tandoor / Lorient").
-  // La présence d'une adresse n'est PAS un bon signal ici : le compte client affiche sa propre
-  // adresse même pour une commande à emporter. En dernier recours, des frais de livraison réels
-  // (> 0€) indiquent une livraison ; sinon on considère que c'est un retrait.
-  const isDelivery = fulfillmentLabel
-    ? /livraison/i.test(fulfillmentLabel) && !/emporter/i.test(fulfillmentLabel)
+  // Ordre de fiabilité décroissante : "Commander: Livraison/À emporter" (gabarit A, explicite par
+  // article) > "Méthode d'expédition" (le champ officiel du compte client) > suffixe "— À
+  // emporter" par article (gabarit C — vu peu fiable en pratique, cf. commande #2164 ci-dessus)
+  // > frais de livraison réels (> 0€) en dernier recours.
+  const isDelivery = commanderLabel
+    ? /livraison/i.test(commanderLabel) && !/emporter/i.test(commanderLabel)
     : shippingLabel
       ? /livraison|domicile/i.test(shippingLabel)
-      : deliveryFee > 0;
+      : dashFulfillmentLabel
+        ? /livraison/i.test(dashFulfillmentLabel) && !/emporter/i.test(dashFulfillmentLabel)
+        : deliveryFee > 0;
   const type = isDelivery ? OrderType.LIVRAISON : OrderType.EMPORTER;
 
   return {
@@ -216,7 +244,7 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
     deliveryFee,
     total,
     paymentMethod: paymentMatch?.[1]?.trim(),
-    fulfillmentLabel: fulfillmentLabel || undefined,
+    fulfillmentLabel: commanderLabel || dashFulfillmentLabel || undefined,
     requestedTimeLabel,
     prepMinutes,
   };

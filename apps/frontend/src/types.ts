@@ -59,6 +59,7 @@ export interface OrderItem {
   status: OrderItemStatus;
   cancelReason?: string | null;
   options: OrderItemOptionEntry[];
+  menuItem?: { category?: { name: string; position: number } | null } | null;
 }
 
 export interface OrderTableLink {

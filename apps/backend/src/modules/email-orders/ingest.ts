@@ -81,7 +81,12 @@ export async function ingestOrderEmail(params: {
         total: parsed.total,
         items: {
           create: parsed.items.map((item) => {
-            const matched = matchMenuItem(item.name, menuItems);
+            // Pour une offre groupée ("Bowl"), rattacher au produit promotionnel lui-même plutôt
+            // qu'à la saveur choisie — sinon un plat à la carte homonyme (ex: "Poulet Tikka
+            // Masala") se ferait à tort attribuer le prix/la catégorie de l'offre.
+            const matched = item.promoLabel
+              ? (matchMenuItem(item.promoLabel, menuItems) ?? matchMenuItem(item.name, menuItems))
+              : matchMenuItem(item.name, menuItems);
             return {
               menuItemId: matched?.id,
               nameSnapshot: item.name,

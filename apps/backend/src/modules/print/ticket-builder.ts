@@ -135,38 +135,48 @@ export function writeTestTicket(printer: ThermalPrinter) {
   printer.cut();
 }
 
+// Espacement de ligne par défaut ESC/POS (1/6 pouce ≈ 4,23 mm) — sert à convertir une marge
+// voulue en millimètres vers un nombre de sauts de ligne, pour le haut du ticket cuisine.
+const DEFAULT_LINE_HEIGHT_MM = 4.23;
+const KITCHEN_TICKET_HANG_MARGIN_MM = 50;
+const KITCHEN_TICKET_HANG_MARGIN_LINES = Math.round(KITCHEN_TICKET_HANG_MARGIN_MM / DEFAULT_LINE_HEIGHT_MM);
+
 /** Ticket cuisine volontairement minimal : juste le numéro, le contexte (type/table/horaire) et
  * les plats — pas de branding ni de coordonnées client, pour aller droit au but en cuisine. */
 export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRelations) {
   const tableLabel = order.orderTables[0]?.table?.name;
 
+  // Marge blanche en haut du ticket (~5cm) pour pouvoir l'accrocher en cuisine (pince/tige) sans
+  // cacher le contenu imprimé en dessous.
+  for (let i = 0; i < KITCHEN_TICKET_HANG_MARGIN_LINES; i++) {
+    printer.newLine();
+  }
+
   printer.alignCenter();
-  printer.setTextDoubleHeight();
   printer.bold(true);
-  printer.println(`Commande #${ref(order)}`);
-  printer.bold(false);
+  printer.setTextQuadArea();
+  printer.println(`#${ref(order)}`);
   printer.setTextNormal();
-
-  printer.bold(true);
-  printer.println(`${ORDER_TYPE_LABELS[order.type] ?? order.type}${tableLabel ? " - " + tableLabel : ""}`);
   printer.bold(false);
 
+  printer.bold(true);
+  printer.setTextDoubleHeight();
+  printer.println(`${ORDER_TYPE_LABELS[order.type] ?? order.type}${tableLabel ? " - " + tableLabel : ""}`);
+  printer.setTextNormal();
+  printer.bold(false);
+
+  const timeLabel = order.type === OrderType.LIVRAISON ? "Heure de livraison" : "Heure de retrait";
+  printer.bold(true);
+  printer.setTextDoubleHeight();
+  printer.println(`${timeLabel}:`);
   if (order.requestedFor) {
-    const label = order.type === OrderType.LIVRAISON ? "Livraison" : "Retrait";
-    printer.bold(true);
-    printer.setTextDoubleHeight();
-    printer.println(`${label} a:`);
     printer.setTextQuadArea();
     printer.println(formatTime(new Date(order.requestedFor)));
-    printer.setTextNormal();
-    printer.bold(false);
   } else {
-    printer.bold(true);
-    printer.setTextQuadArea();
-    printer.println(formatTime(new Date(order.createdAt)));
-    printer.setTextNormal();
-    printer.bold(false);
+    printer.println("Aucune donnee trouvee");
   }
+  printer.setTextNormal();
+  printer.bold(false);
 
   printer.alignLeft();
   printer.drawLine();

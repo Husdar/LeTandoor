@@ -89,6 +89,15 @@ la ligne suivante. Le parser gère les deux formats (regex avec alternative
 (voir `EmailIngestLog` du 2026-07-23, commande #2145) — à surveiller si Hostinger
 introduit encore d'autres variantes de mise en forme des offres.
 
+**Rattachement au bon menu (`promoLabel`)** : le nom nettoyé (`Poulet Curry`) est identique à
+celui d'un plat à la carte homonyme s'il en existe un — le matcher (`matcher.ts`) les confondait
+donc avant ce correctif (vu sur une commande "Poulet Tikka Massala" du 2026-07-26, attribuée à
+tort au plat à la carte "Poulet Tikka Masala" à 12€ au lieu de l'offre "Bowl" à 15,50€). Le
+parser extrait maintenant le nom du produit promotionnel lui-même (`Bowl`, capturé depuis le
+texte avant le tiret via `^\d+\s+(.+?)\s+achet[ée]`) dans `item.promoLabel`, et `ingest.ts`
+rattache l'article à ce produit en priorité plutôt qu'à la saveur — à condition qu'un menu_item
+nommé en conséquence (ex: "Bowl") existe bien en base (voir Administration → Menu).
+
 ## Variante : mode de retrait par article après le nom du plat
 
 Une variante du Gabarit C ajoute le mode de retrait **après** le nom de chaque plat plutôt que
@@ -103,8 +112,15 @@ sur une ligne "Commander:" séparée :
 inverse (le vrai nom du plat suit le tiret, précédé d'un texte promo `1 acheté = 1 offert —`).
 Le parser distingue les deux en testant si le texte après le tiret correspond à un mode de
 retrait connu (`à emporter`, `livraison`, `sur place`) — si oui, c'est le nom AVANT le tiret qui
-est le vrai plat, et ce mode est aussi capturé comme `fulfillmentLabel` (repère fiable pour le
-type de commande). Sinon, on garde l'ancien comportement (nom APRÈS le tiret).
+est le vrai plat.
+
+**⚠️ Ce suffixe par article n'est PAS fiable pour déterminer le type de commande** — vu sur la
+commande #2164 du 2026-07-25 (CHEREAU CHRISTOPHE) : chaque article portait `— À emporter`, alors
+que la commande était une vraie livraison (`Méthode d'expédition: Livraison hors lorient`,
+adresse réelle, frais de livraison de 5€). La commande avait été créée en base avec `type =
+EMPORTER`, sans adresse ni heure de retrait — corrigée manuellement en production après coup.
+Le parser capture donc ce suffixe séparément (`dashFulfillmentLabel`) et ne l'utilise qu'en
+dernier recours, après `Méthode d'expédition` (voir "Détection du type de commande" ci-dessous).
 
 ## Fuseau horaire du créneau souhaité
 
@@ -116,11 +132,17 @@ l'horaire de 2h une fois déployé, sans que ça se voie en local.
 
 ## Points d'attention communs
 
-- **Détection du type de commande** : si une ligne `Comman(der|de): ...` est présente
-  (gabarit A), elle fait foi. Sinon (gabarit B), le type est déduit de la présence
-  d'une vraie adresse dans le bloc client — les commandes à emporter ont `X` / `X X`
-  en guise d'adresse, une commande avec une adresse réelle est donc traitée comme
-  livraison.
+- **Détection du type de commande**, par ordre de fiabilité décroissante : (1) une ligne
+  `Comman(der|de): ...` par article (gabarit A) ; (2) `Méthode d'expédition` dans le bloc
+  client (le plus fiable en l'absence de (1) — ex: "Livraison à domicile" vs le nom d'un
+  point de retrait) ; (3) le suffixe `— À emporter`/`— Livraison` après le nom d'un plat
+  (gabarit C — non fiable seul, voir avertissement ci-dessus) ; (4) en dernier recours,
+  des frais de livraison réels (> 0€) indiquent une livraison. La présence d'une adresse
+  seule n'est PAS un bon signal : le compte client affiche sa propre adresse même pour
+  une commande à emporter.
+- **Format du créneau choisi** : vu à la fois abrégé (`19h`, `19h30`) et en toutes lettres
+  (`19 heures`) selon la commande — les deux sont normalisés vers le format abrégé avant
+  d'être passés à `resolveRequestedTime()`.
 - Le parser vérifie que la somme des articles correspond au sous-total annoncé ; en
   cas d'écart, l'email est rejeté et journalisé dans `EmailIngestLog` (statut `ECHEC`)
   plutôt que de créer une commande avec un montant potentiellement faux.

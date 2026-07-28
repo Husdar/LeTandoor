@@ -94,3 +94,23 @@ export function displayOrderRef(order: { orderNumber: number; externalRef?: stri
 export function shortenItemName(name: string): string {
   return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
 }
+
+interface CategorizedItem {
+  menuItem?: { category?: { name: string; position: number } | null } | null;
+}
+
+/** Regroupe et trie les articles par catégorie (position croissante), exactement comme le ticket
+ * cuisine physique (voir ticket-builder.ts côté backend) — pour que l'aperçu dans l'appli
+ * corresponde vraiment à ce qui sort de l'imprimante. */
+export function groupItemsByCategory<T extends CategorizedItem>(items: T[]): { categoryName: string; items: T[] }[] {
+  const groups = new Map<string, { categoryName: string; position: number; items: T[] }>();
+  for (const item of items) {
+    const category = item.menuItem?.category;
+    const key = category?.name ?? "__autres__";
+    if (!groups.has(key)) {
+      groups.set(key, { categoryName: category?.name ?? "Autres", position: category?.position ?? Number.MAX_SAFE_INTEGER, items: [] });
+    }
+    groups.get(key)!.items.push(item);
+  }
+  return [...groups.values()].sort((a, b) => a.position - b.position);
+}
