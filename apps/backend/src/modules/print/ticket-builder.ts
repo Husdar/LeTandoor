@@ -1,6 +1,7 @@
 import { printer as ThermalPrinter, types as PrinterTypes, characterSet as CharacterSet } from "node-thermal-printer";
 import { OrderItemStatus, OrderSource, OrderType, PaymentMethod } from "@le-tandoor/shared";
 import { RESTAURANT_TIMEZONE } from "../../timezone.js";
+import { LOGO_PNG_BASE64 } from "./logo.js";
 import type { OrderWithRelations } from "../orders/order-include.js";
 
 function formatDateTime(date: Date): string {
@@ -81,40 +82,6 @@ function groupItemsByCategory(items: OrderItemWithRelations[]): CategoryGroup[] 
     groups.get(key)!.items.push(item);
   }
   return Array.from(groups.values()).sort((a, b) => a.position - b.position);
-}
-
-/** Type, table ou coordonnées client selon le canal — essentiel pour l'emporter/la livraison. */
-function writeOrderContext(printer: ThermalPrinter, order: OrderWithRelations) {
-  const tableLabel = order.orderTables[0]?.table?.name;
-
-  printer.setTextDoubleHeight();
-  printer.bold(true);
-  printer.println(`${ORDER_TYPE_LABELS[order.type] ?? order.type}${tableLabel ? " - " + tableLabel : ""}`);
-  printer.bold(false);
-  printer.setTextNormal();
-
-  if (order.source === OrderSource.SITE_WEB) {
-    printer.println("(Commande site web)");
-  }
-
-  if (order.type !== OrderType.SUR_PLACE) {
-    if (order.customerName) printer.println(`Client: ${order.customerName}`);
-    if (order.customerPhone) printer.println(`Tel: ${order.customerPhone}`);
-  }
-  if (order.type === OrderType.LIVRAISON && order.deliveryAddress) {
-    printer.bold(true);
-    printer.println(`Adresse: ${order.deliveryAddress}`);
-    printer.bold(false);
-  }
-  if (order.requestedFor) {
-    const label = order.type === OrderType.LIVRAISON ? "Livraison souhaitee" : "Retrait souhaite";
-    printer.bold(true);
-    printer.setTextQuadArea();
-    printer.println(`${label}:`);
-    printer.println(formatTime(new Date(order.requestedFor)));
-    printer.setTextNormal();
-    printer.bold(false);
-  }
 }
 
 /** Ticket court utilisé par l'assistant de configuration pour vérifier qu'une imprimante répond avant de l'enregistrer. */
@@ -205,21 +172,54 @@ export function writeKitchenTicket(printer: ThermalPrinter, order: OrderWithRela
   printer.cut();
 }
 
-export function writeReceipt(printer: ThermalPrinter, order: OrderWithRelations) {
+/** Reçu caisse — mise en page inspirée d'un ticket Uber Eats : logo en haut, puis une barre
+ * inversée (texte blanc sur fond noir) avec le numéro de commande en très gros et le nom du
+ * client juste en dessous, avant le détail des articles et les totaux. */
+export async function writeReceipt(printer: ThermalPrinter, order: OrderWithRelations) {
+  const tableLabel = order.orderTables[0]?.table?.name;
+
   printer.alignCenter();
+  await printer.printImageBuffer(Buffer.from(LOGO_PNG_BASE64, "base64"));
+  printer.newLine();
+
+  printer.invert(true);
   printer.bold(true);
-  printer.setTextDoubleHeight();
-  printer.println("LE TANDOOR");
+  printer.setTextQuadArea();
+  printer.println(`#${ref(order)}`);
+  if (order.customerName) {
+    printer.setTextDoubleHeight();
+    printer.println(order.customerName);
+  }
   printer.setTextNormal();
   printer.bold(false);
-  printer.println("Specialites Indienne et Pakistanaise");
-  printer.println("1 Rue de Belgique, Lorient");
-  printer.drawLine();
+  printer.invert(false);
+
+  printer.println(formatDateTime(new Date(order.createdAt)));
+  if (order.requestedFor) {
+    const label = order.type === OrderType.LIVRAISON ? "Livraison prevue" : "A preparer pour";
+    printer.println(`${label}: ${formatTime(new Date(order.requestedFor))}`);
+  }
+  printer.newLine();
+
+  printer.bold(true);
+  printer.setTextDoubleHeight();
+  printer.println(`${(ORDER_TYPE_LABELS[order.type] ?? order.type).toUpperCase()}${tableLabel ? " - " + tableLabel : ""}`);
+  printer.setTextNormal();
+  printer.bold(false);
+
+  if (order.source === OrderSource.SITE_WEB) {
+    printer.println("(Commande site web)");
+  }
+  if (order.type !== OrderType.SUR_PLACE && order.customerPhone) {
+    printer.println(`Tel: ${order.customerPhone}`);
+  }
+  if (order.type === OrderType.LIVRAISON && order.deliveryAddress) {
+    printer.bold(true);
+    printer.println(`Adresse: ${order.deliveryAddress}`);
+    printer.bold(false);
+  }
 
   printer.alignLeft();
-  printer.println(`Commande #${ref(order)}`);
-  printer.println(formatDateTime(new Date(order.createdAt)));
-  writeOrderContext(printer, order);
   printer.drawLine();
 
   const receiptGroups = groupItemsByCategory(order.items.filter((item) => item.status !== OrderItemStatus.ANNULE));

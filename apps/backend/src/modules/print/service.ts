@@ -107,7 +107,7 @@ export async function printOrder(orderId: string, ticketType: PrintTicketType) {
       if (ticketType === PrintTicketType.CUISINE) {
         writeKitchenTicket(client, order);
       } else {
-        writeReceipt(client, order);
+        await writeReceipt(client, order);
       }
       const buffer = client.getBuffer();
 
