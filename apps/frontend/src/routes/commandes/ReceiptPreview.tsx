@@ -90,7 +90,7 @@ export default function ReceiptPreview({ order }: { order: Order }) {
             <span>-{formatMoney(discount)}</span>
           </div>
         )}
-        <div className="flex justify-between font-bold">
+        <div className="flex justify-between text-base font-extrabold">
           <span>TOTAL</span>
           <span>{formatMoney(order.total)}</span>
         </div>

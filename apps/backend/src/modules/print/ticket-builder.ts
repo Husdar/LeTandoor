@@ -255,7 +255,9 @@ export async function writeReceipt(printer: ThermalPrinter, order: OrderWithRela
     printer.leftRight("Remise", `-${formatMoney(order.discountAmount)}`);
   }
   printer.bold(true);
+  printer.setTextDoubleHeight();
   printer.leftRight("TOTAL", formatMoney(order.total));
+  printer.setTextNormal();
   printer.bold(false);
 
   const lastPayment = order.payments[order.payments.length - 1];
