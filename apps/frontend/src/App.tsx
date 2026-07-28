@@ -5,6 +5,7 @@ import { useAuthStore } from "./store/auth";
 import { refreshSession } from "./lib/api";
 import { useRealtimeSync } from "./lib/ws";
 import { initAudioUnlock } from "./lib/sound";
+import { useWakeLock } from "./hooks/useWakeLock";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
@@ -33,6 +34,7 @@ export default function App() {
   }, []);
 
   useRealtimeSync();
+  useWakeLock();
 
   if (!initialized) {
     return (

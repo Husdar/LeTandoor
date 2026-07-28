@@ -7,6 +7,7 @@ import { useScreenLock } from "../store/screenLock";
 import { api } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useRingReconciliation } from "../lib/ws";
+import { useFullscreen } from "../hooks/useFullscreen";
 import LanguageToggle from "./LanguageToggle";
 import AssistantWidget from "./AssistantWidget";
 import ChangePasswordModal from "./ChangePasswordModal";
@@ -24,6 +25,8 @@ import {
   IconMenu,
   IconClose,
   IconLock,
+  IconExpand,
+  IconShrink,
   LogoMark,
 } from "./icons";
 
@@ -44,6 +47,7 @@ export default function Layout() {
   const clear = useAuthStore((s) => s.clear);
   const locked = useScreenLock((s) => s.locked);
   const lock = useScreenLock((s) => s.lock);
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
   const navigate = useNavigate();
   const location = useLocation();
   const { t, lang } = useT();
@@ -101,6 +105,13 @@ export default function Layout() {
             <span className="underline-offset-2 group-hover:underline">
               {user?.name} <span className="text-gold">· {user?.role}</span>
             </span>
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? t("layout.fullscreenExit") : t("layout.fullscreenEnter")}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-cream/80 transition hover:bg-cream/10"
+          >
+            {isFullscreen ? <IconShrink className="h-5 w-5" /> : <IconExpand className="h-5 w-5" />}
           </button>
           <button
             onClick={lock}
@@ -164,18 +175,27 @@ export default function Layout() {
               </span>
             </button>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <button
+              onClick={() => {
+                toggleFullscreen();
+                setMobileMenuOpen(false);
+              }}
+              className="btn-outline flex items-center justify-center gap-2 !px-2 text-sm"
+            >
+              {isFullscreen ? <IconShrink className="h-4 w-4" /> : <IconExpand className="h-4 w-4" />}
+            </button>
             <button
               onClick={() => {
                 lock();
                 setMobileMenuOpen(false);
               }}
-              className="btn-outline flex items-center justify-center gap-2"
+              className="btn-outline flex items-center justify-center gap-2 !px-2 text-sm"
             >
               <IconLock className="h-4 w-4" />
               {t("layout.lock")}
             </button>
-            <button onClick={handleLogout} className="btn-outline">
+            <button onClick={handleLogout} className="btn-outline !px-2 text-sm">
               {t("layout.logout")}
             </button>
           </div>

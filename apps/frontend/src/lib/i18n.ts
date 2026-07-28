@@ -18,6 +18,8 @@ const dict: Dict = {
   "layout.subtitle": { fr: "Gestion du restaurant", ur: "ریسٹورنٹ کا انتظام" },
   "layout.logout": { fr: "Déconnexion", ur: "لاگ آؤٹ" },
   "layout.lock": { fr: "Verrouiller", ur: "لاک کریں" },
+  "layout.fullscreenEnter": { fr: "Plein écran", ur: "پوری اسکرین" },
+  "layout.fullscreenExit": { fr: "Quitter le plein écran", ur: "پوری اسکرین سے باہر نکلیں" },
   "layout.openMenu": { fr: "Ouvrir le menu", ur: "مینو کھولیں" },
   "layout.closeMenu": { fr: "Fermer le menu", ur: "مینو بند کریں" },
 

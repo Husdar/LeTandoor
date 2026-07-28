@@ -13,7 +13,7 @@ export default defineConfig({
         description: "Gestion des commandes, du plan de salle et des performances du restaurant Le Tandoor",
         theme_color: "#6E1423",
         background_color: "#FAF3E7",
-        display: "standalone",
+        display: "fullscreen",
         orientation: "landscape",
         icons: [],
       },
