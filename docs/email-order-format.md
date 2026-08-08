@@ -130,6 +130,29 @@ production (Render) tourne en UTC, contrairement à un poste de développement l
 sur Europe/Paris — un simple `Date.setHours()` (qui utilise le fuseau du serveur) décalait donc
 l'horaire de 2h une fois déployé, sans que ça se voie en local.
 
+## Dérive du gabarit C — vue sur la commande #2201 du 2026-08-08
+
+Hostinger a de nouveau fait évoluer ce gabarit, en silence — l'ingestion s'est mise à échouer
+(`EmailIngestLog` en `ECHEC`) pour toute nouvelle commande jusqu'à ce correctif. Différences par
+rapport au gabarit C original ci-dessus :
+- **Objet sans AUCUN numéro** (`Vous avez reçu une nouvelle commande`) — jusque-là seul le gabarit
+  B perdait le numéro dans l'objet, mais gardait `Ordre #N résumé` dans le corps. Ici le repère de
+  secours dans le corps a aussi changé de forme : `Nouvelle commande #N` (en tête d'email) et
+  `Résumé de la commande #N` (juste avant la liste des articles) — ni l'un ni l'autre ne
+  correspond à `Ordre #N résumé`. Le parser reconnaît maintenant `(?:ordre|commande)\s*#N`.
+- Le repère `résumé` peut avoir du texte à sa suite sur la même ligne (`Résumé de la commande
+  #2201`) au lieu d'être seul en fin de ligne — le parser absorbe le reste de la ligne avant de
+  chercher le saut de ligne.
+- **"Informations client" → "Coordonnées client"**, et **"Méthode d'expédition" → "Méthode de
+  livraison"**. Sans cette correction, le bloc client n'est plus repéré du tout, et le nom du
+  client retombe sur un filet de secours peu fiable (`reçu une nouvelle commande de la part de
+  <Nom>.` — noter le nouveau "de la part de" qui n'existait pas non plus avant).
+
+**Si Hostinger change encore le gabarit** : la boîte mail réelle (`mohammad.skandar@icloud.com`)
+peut être inspectée directement en IMAP avec les identifiants de `.env` pour récupérer le texte
+brut d'une commande en échec, puis rejouée localement contre `parseOrderEmail()` sans avoir besoin
+d'accès à la base de production — c'est ce qui a permis de diagnostiquer cette dérive.
+
 ## Points d'attention communs
 
 - **Détection du type de commande**, par ordre de fiabilité décroissante : (1) une ligne
@@ -146,8 +169,12 @@ l'horaire de 2h une fois déployé, sans que ça se voie en local.
 - Le parser vérifie que la somme des articles correspond au sous-total annoncé ; en
   cas d'écart, l'email est rejeté et journalisé dans `EmailIngestLog` (statut `ECHEC`)
   plutôt que de créer une commande avec un montant potentiellement faux.
-- Les emails déjà traités (par `messageId` IMAP ou par numéro de commande
-  `externalRef`) sont ignorés pour éviter les doublons en cas de re-scan de la boîte.
+- Les emails déjà traités avec succès (`TRAITE`) ou déjà en doublon (`IGNORE`, par `messageId`
+  IMAP ou par numéro de commande `externalRef`) sont ignorés pour éviter les doublons en cas de
+  re-scan de la boîte. Un échec de parsing (`ECHEC`) reste volontairement réessayé à chaque
+  passage suivant — sinon une commande touchée par un bug de parsing (comme la dérive de gabarit
+  ci-dessus) resterait bloquée pour toujours, même après correction du code, puisque rien d'autre
+  ne redéclenche jamais son traitement.
 - La détection ne dépend plus du statut lu/non-lu IMAP (`\Seen`) — un email consulté
   depuis un téléphone avant le passage du serveur serait sinon ignoré à tort. La
   recherche porte sur une fenêtre de quelques jours, la déduplication ci-dessus

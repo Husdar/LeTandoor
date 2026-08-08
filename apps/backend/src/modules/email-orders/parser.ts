@@ -81,15 +81,23 @@ function round2(n: number): number {
 export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder {
   const body = text.replace(/\r\n/g, "\n");
 
-  const refMatch = subject.match(/#(\d+)/) ?? body.match(/Ordre\s*#(\d+)/i);
+  // "Ordre #N résumé" (gabarits A/B) ou "Nouvelle commande #N" / "Résumé de la commande #N"
+  // (gabarit C, vu sur la commande #2201 du 2026-08-08 — Hostinger a de nouveau fait évoluer le
+  // gabarit, l'objet de l'email ne contient plus du tout de numéro pour cette variante).
+  const refMatch = subject.match(/#(\d+)/) ?? body.match(/(?:ordre|commande)\s*#(\d+)/i);
   if (!refMatch) {
     throw new EmailParseError("Numéro de commande introuvable dans l'email");
   }
   const externalRef = refMatch[1];
 
-  const nameFallbackMatch = body.match(/reçu une nouvelle commande de\s+(.+?)\.?\s*\n/);
+  // "de <Nom>." ou "de la part de <Nom>." (variante vue sur la commande #2201 du 2026-08-08) —
+  // simple filet de secours, prend le pas seulement si le bloc client est introuvable.
+  const nameFallbackMatch = body.match(/reçu une nouvelle commande de\s+(?:la part de\s+)?(.+?)\.?\s*\n/);
 
-  const itemsSectionMatch = body.match(/résumé\s*\n([\s\S]*?)\nSous-total/i);
+  // "... résumé" (fin de ligne, gabarits A/B) ou "Résumé de la commande #N" (reste de la ligne
+  // après "résumé", gabarit C vu sur la commande #2201 du 2026-08-08) — [^\n]* absorbe le texte
+  // qui suit "résumé" sur la même ligne quand il y en a.
+  const itemsSectionMatch = body.match(/résumé[^\n]*\n([\s\S]*?)\nSous-total/i);
   if (!itemsSectionMatch) {
     throw new EmailParseError("Section des articles introuvable (repère 'résumé' non trouvé)");
   }
@@ -185,10 +193,12 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
   const prepMinutes = slotMatch ? Number(slotMatch[1]) : undefined;
   const requestedTimeLabel = slotMatch ? normalizeTimeLabel(slotMatch[2]) : undefined;
 
-  // Bloc client : capturé jusqu'au pied de page connu (les deux gabarits ont des textes différents
-  // ici), puis on isole "Méthode d'expédition" séparément car elle peut être accolée au téléphone
-  // sur la même ligne quand la mise en page HTML à deux colonnes est aplatie en texte brut.
-  const clientBlockMatch = body.match(/Informations client\s*([\s\S]*?)(?:Si vous avez des questions|$)/i);
+  // Bloc client : capturé jusqu'au pied de page connu (les gabarits ont des textes différents
+  // ici — "Informations client" (A/B) ou "Coordonnées client" (C, vu sur la commande #2201 du
+  // 2026-08-08)), puis on isole "Méthode d'expédition"/"Méthode de livraison" (même variation
+  // selon le gabarit) séparément car elle peut être accolée au téléphone sur la même ligne quand
+  // la mise en page HTML à deux colonnes est aplatie en texte brut.
+  const clientBlockMatch = body.match(/(?:Informations|Coordonnées) client\s*([\s\S]*?)(?:Si vous avez des questions|$)/i);
   let customerEmail: string | undefined;
   let customerPhone: string | undefined;
   let customerNameFromBlock: string | undefined;
@@ -197,8 +207,8 @@ export function parseOrderEmail(subject: string, text: string): ParsedEmailOrder
 
   if (clientBlockMatch) {
     const rawBlock = clientBlockMatch[1];
-    shippingLabel = rawBlock.match(/Méthode d'expédition\s*:?\s*\n?([^\n]*)/i)?.[1]?.trim();
-    const clientOnly = rawBlock.replace(/Méthode d'expédition[\s\S]*$/i, "");
+    shippingLabel = rawBlock.match(/Méthode d(?:'expédition|e livraison)\s*:?\s*\n?([^\n]*)/i)?.[1]?.trim();
+    const clientOnly = rawBlock.replace(/Méthode d(?:'expédition|e livraison)[\s\S]*$/i, "");
 
     const lines = clientOnly
       .split("\n")

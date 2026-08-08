@@ -21,8 +21,13 @@ export async function ingestOrderEmail(params: {
 }): Promise<IngestResult> {
   const { messageId, subject, text, receivedAt } = params;
 
+  // Un échec (ECHEC) reste volontairement réessayable au prochain passage — sinon un email
+  // légitime, une fois marqué en échec par un bug de parsing (ex: Hostinger a fait évoluer son
+  // gabarit), reste bloqué pour toujours même après correction du code, puisque le scan périodique
+  // ne le reverra jamais autrement (voir commande #2201 du 2026-08-08, dont l'objet/gabarit avait
+  // changé). Seuls TRAITE et IGNORE (vraiment déjà traité/doublon) bloquent une nouvelle tentative.
   const existingLog = await prisma.emailIngestLog.findUnique({ where: { messageId } });
-  if (existingLog) {
+  if (existingLog && existingLog.status !== EmailIngestStatus.ECHEC) {
     return { status: EmailIngestStatus.IGNORE, errorMessage: "Email déjà traité" };
   }
 
@@ -31,8 +36,10 @@ export async function ingestOrderEmail(params: {
     parsed = parseOrderEmail(subject, text);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Erreur de parsing inconnue";
-    await prisma.emailIngestLog.create({
-      data: { messageId, subject, receivedAt, status: EmailIngestStatus.ECHEC, errorMessage, rawText: text },
+    await prisma.emailIngestLog.upsert({
+      where: { messageId },
+      create: { messageId, subject, receivedAt, status: EmailIngestStatus.ECHEC, errorMessage, rawText: text },
+      update: { subject, receivedAt, status: EmailIngestStatus.ECHEC, errorMessage, rawText: text },
     });
     return { status: EmailIngestStatus.ECHEC, errorMessage };
   }
@@ -44,9 +51,18 @@ export async function ingestOrderEmail(params: {
     // commande) : EmailIngestLog.orderId est unique, donc seul le premier doublon peut y être
     // rattaché. Les suivants sont tout de même journalisés, sans lien vers la commande.
     const alreadyLinked = await prisma.emailIngestLog.findUnique({ where: { orderId: existingOrder.id } });
-    await prisma.emailIngestLog.create({
-      data: {
+    await prisma.emailIngestLog.upsert({
+      where: { messageId },
+      create: {
         messageId,
+        subject,
+        receivedAt,
+        status: EmailIngestStatus.IGNORE,
+        errorMessage,
+        rawText: text,
+        orderId: alreadyLinked ? undefined : existingOrder.id,
+      },
+      update: {
         subject,
         receivedAt,
         status: EmailIngestStatus.IGNORE,
@@ -104,15 +120,10 @@ export async function ingestOrderEmail(params: {
       },
     });
 
-    await tx.emailIngestLog.create({
-      data: {
-        messageId,
-        subject,
-        receivedAt,
-        status: EmailIngestStatus.TRAITE,
-        rawText: text,
-        orderId: created.id,
-      },
+    await tx.emailIngestLog.upsert({
+      where: { messageId },
+      create: { messageId, subject, receivedAt, status: EmailIngestStatus.TRAITE, rawText: text, orderId: created.id },
+      update: { subject, receivedAt, status: EmailIngestStatus.TRAITE, errorMessage: null, rawText: text, orderId: created.id },
     });
 
     return tx.order.findUniqueOrThrow({ where: { id: created.id }, include: fullOrderInclude });
